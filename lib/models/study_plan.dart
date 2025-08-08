@@ -7,10 +7,12 @@ class StudyPlan {
   final DateTime targetDate;
   final DateTime creationDate;
   final String unit;
+  // --- 追加フィールド ---
   final String description;
   final List<String> tags;
   final int initialDifficulty;
-  final int predictedPt; // 予測PT
+  // --------------------
+  final int predictedPt;
 
   StudyPlan({
     required this.id,
@@ -33,10 +35,10 @@ class StudyPlan {
       targetDate: (map['targetDate'] as Timestamp).toDate(),
       creationDate: (map['creationDate'] as Timestamp).toDate(),
       unit: map['unit'] as String,
-      description: map['description'] as String,
-      tags: List<String>.from(map['tags'] as List<dynamic>),
-      initialDifficulty: map['initialDifficulty'] as int,
-      predictedPt: map['predictedPt'] as int? ?? 0, // 互換性のためのnullチェック
+      description: map['description'] as String? ?? '',
+      tags: List<String>.from(map['tags'] as List<dynamic>? ?? []),
+      initialDifficulty: map['initialDifficulty'] as int? ?? 3,
+      predictedPt: map['predictedPt'] as int? ?? 0,
     );
   }
 

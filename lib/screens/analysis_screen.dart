@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:study_ai_assistant/constants/app_sizes.dart';
 import 'package:study_ai_assistant/models/learning_record.dart';
 import 'package:study_ai_assistant/models/study_plan.dart';
 import 'package:study_ai_assistant/services/plan_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+
+enum ChartType { pt, amount }
 
 class AnalysisScreen extends StatefulWidget {
   const AnalysisScreen({super.key});
@@ -15,6 +18,7 @@ class AnalysisScreen extends StatefulWidget {
 class _AnalysisScreenState extends State<AnalysisScreen> {
   final PlanService _planService = PlanService();
   late Future<Map<String, dynamic>> _analysisDataFuture;
+  ChartType _selectedChartType = ChartType.pt; // 表示切り替え用の状態
 
   @override
   void initState() {
@@ -65,12 +69,12 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
           final Map<String, List<LearningRecord>> allRecords = snapshot.data!['allRecords'];
 
           return ListView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(p16),
             children: [
               _buildWeeklyChart(allRecords),
-              const SizedBox(height: 24),
+              gapH24,
               _buildBalanceChart(plans, allRecords),
-              const SizedBox(height: 24),
+              gapH24,
               _buildGapAnalysis(plans, allRecords),
             ],
           );
@@ -79,10 +83,16 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, {Widget? trailing}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+      padding: const EdgeInsets.only(bottom: p16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleLarge),
+          if (trailing != null) trailing,
+        ],
+      ),
     );
   }
 
@@ -93,7 +103,10 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     allRecords.values.expand((records) => records).forEach((record) {
       final diff = today.difference(record.recordDate).inDays;
       if (diff >= 0 && diff < 7) {
-        weeklyData[diff] = (weeklyData[diff] ?? 0.0) + record.actualPt;
+        final value = _selectedChartType == ChartType.pt
+            ? record.actualPt.toDouble()
+            : record.pagesCompleted.toDouble();
+        weeklyData[diff] = (weeklyData[diff] ?? 0.0) + value;
       }
     });
 
@@ -101,14 +114,26 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       final dayIndex = 6 - index;
       return BarChartGroupData(
         x: index,
-        barRods: [BarChartRodData(toY: weeklyData[dayIndex] ?? 0.0, color: Colors.lightBlueAccent, width: 16)],
+        barRods: [BarChartRodData(toY: weeklyData[dayIndex] ?? 0.0, color: Theme.of(context).colorScheme.primary, width: 16)],
       );
     });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('週間学習時間 (PT)'),
+        _buildSectionTitle(
+          '週間学習グラフ',
+          trailing: ToggleButtons(
+            isSelected: [_selectedChartType == ChartType.pt, _selectedChartType == ChartType.amount],
+            onPressed: (index) {
+              setState(() {
+                _selectedChartType = index == 0 ? ChartType.pt : ChartType.amount;
+              });
+            },
+            borderRadius: BorderRadius.circular(8),
+            children: const [Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('PT')), Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('量'))],
+          ),
+        ),
         SizedBox(
           height: 200,
           child: BarChart(
@@ -124,7 +149,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                     },
                   ),
                 ),
-                leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 28)),
+                leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 32)),
                 topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
               ),
@@ -136,7 +161,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       ],
     );
   }
-
+  
   Widget _buildBalanceChart(List<StudyPlan> plans, Map<String, List<LearningRecord>> allRecords) {
     final Map<String, double> balanceData = {};
     for (final plan in plans) {

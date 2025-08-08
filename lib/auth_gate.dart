@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:study_ai_assistant/main_scaffold.dart';
-import 'package:study_ai_assistant/screens/auth_screen.dart';
+import 'package:study_ai_assistant/screens/login_screen.dart'; // AuthScreenの代わりにLoginScreenをインポート
 import 'package:study_ai_assistant/services/auth_service.dart';
 
 class AuthGate extends StatelessWidget {
@@ -25,7 +25,7 @@ class AuthGate extends StatelessWidget {
         if (snapshot.hasData) {
           return const MainScaffold();
         } else {
-          return const AuthScreen();
+          return const LoginScreen(); // AuthScreenの代わりにLoginScreenを表示
         }
       },
     );
