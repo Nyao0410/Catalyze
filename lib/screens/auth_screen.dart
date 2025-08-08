@@ -10,7 +10,7 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  final AuthService _authService = AuthService();
+  final AuthService authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLogin = true; // true: ログイン, false: サインアップ
@@ -18,18 +18,18 @@ class _AuthScreenState extends State<AuthScreen> {
   void _submitAuthForm() async {
     try {
       if (_isLogin) {
-        await _authService.logIn(
+        await authService.logIn(
           email: _emailController.text,
           password: _passwordController.text,
         );
       } else {
-        await _authService.signUp(
+        await authService.signUp(
           email: _emailController.text,
           password: _passwordController.text,
         );
       }
     } on FirebaseAuthException catch (e) {
-      String message;
+      String message = '認証エラーが発生しました'; // 初期化
       if (e.code == 'user-not-found') {
         message = 'そのメールアドレスのユーザーは見つかりません。';
       } else if (e.code == 'wrong-password') {
@@ -41,10 +41,12 @@ class _AuthScreenState extends State<AuthScreen> {
       } else {
         message = '認証エラーが発生しました: ${e.message}';
       }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('予期せぬエラーが発生しました: $e'), backgroundColor: Colors.red),
       );
@@ -96,3 +98,5 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 }
+
+

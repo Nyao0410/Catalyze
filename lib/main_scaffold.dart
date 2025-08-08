@@ -15,7 +15,7 @@ class MainScaffold extends StatefulWidget {
 
 class _MainScaffoldState extends State<MainScaffold> {
   int _selectedIndex = 0;
-  final AuthService _authService = AuthService();
+  final AuthService authService = AuthService();
 
   static const List<Widget> _widgetOptions = <Widget>[
     HomeScreen(),
@@ -32,7 +32,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream: _authService.authStateChanges,
+      stream: authService.authStateChanges,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(

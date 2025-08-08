@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:study_ai_assistant/main_scaffold.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:study_ai_assistant/auth_gate.dart';
+import 'package:study_ai_assistant/constants/app_theme.dart'; // 新しいテーマをインポート
 import 'firebase_options.dart';
 
 Future<void> main() async {
-  // Flutterアプリのウィジェット（UI部品）を動かすための準備
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Firebaseを初期化します
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
   runApp(const MyApp());
 }
 
@@ -22,13 +19,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Study AI Assistant',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        fontFamily: 'NotoSansJP',
-      ),
-      home: const MainScaffold(),
+      // 新しいテーマを適用
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system, // OSの設定に応じてテーマを自動で切り替え
+
+      home: const AuthGate(),
       debugShowCheckedModeBanner: false,
     );
   }

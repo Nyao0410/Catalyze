@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart'; // debugPrintのために追加
 
 class AuthService {
   // Firebase Authenticationのインスタンスを取得
@@ -28,7 +29,7 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       // エラーハンドリング（例: パスワードが弱い、メールアドレスが既に使用されているなど）
       // UI側でこのエラーをキャッチして、適切なメッセージを表示します。
-      print('SignUp Error: ${e.message}');
+      debugPrint('SignUp Error: ${e.message}');
       rethrow; // エラーを呼び出し元に再スローする
     }
   }
@@ -47,7 +48,7 @@ class AuthService {
       return userCredential;
     } on FirebaseAuthException catch (e) {
       // エラーハンドリング（例: ユーザーが見つからない、パスワードが違うなど）
-      print('LogIn Error: ${e.message}');
+      debugPrint('LogIn Error: ${e.message}');
       rethrow;
     }
   }

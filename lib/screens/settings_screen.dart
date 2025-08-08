@@ -6,7 +6,7 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AuthService _authService = AuthService();
+    final AuthService authService = AuthService();
 
     return Scaffold(
       appBar: AppBar(
@@ -23,7 +23,7 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                await _authService.logOut();
+                await authService.logOut();
               },
               child: const Text('ログアウト'),
             ),
