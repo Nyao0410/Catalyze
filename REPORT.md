@@ -23,7 +23,7 @@
     -   `app_theme.dart`: アプリケーションのライトテーマとダークテーマを定義します。`ColorScheme`、`textTheme`、`appBarTheme` などのプロパティを設定し、アプリケーション全体で一貫したデザインとブランドイメージを適用できるようにします。`GoogleFonts` を使用してカスタムフォントを適用しています。
 
 -   **`lib/models/`**: アプリケーションのデータ構造を定義するDartクラスを含みます。
-    -   `learning_record.dart`: 個々の学習記録を表すデータモデル。ポモドーロタイマーのセッション終了時や手動での記録時に生成され、Firestoreに保存されます。学習量 (`amount`), 単位 (`unit`), 学習時間 (`durationInMinutes`), 日付 (`date`), ポモドーロ回数 (`ptCount`), 集中度 (`concentrationLevel`) などの情報を含みます。Firestoreとの間でデータを変換するための `fromMap` および `toMap` メソッドを提供します。
+    -   `learning_record.dart`: 個々の学習記録を表すデータモデル。ポモドーロタイマーのセッション終了時や手動での記録時に生成され、Firestoreに保存されます。学習量 (`amount`), 単位 (`unit`), 学習時間 (`durationInMinutes`), 日付 (`date`), ポモドーロ回数 (`ptCount`), 集中度 (`concentrationLevel`), 難易度 (`difficulty`) などの情報を含みます。Firestoreとの間でデータを変換するための `fromMap` および `toMap` メソッドを提供します。
     -   `study_plan.dart`: 学習計画を表すデータモデル。ユーザーが設定する学習目標（例: 参考書名、総量、単位、目標達成日、優先度など）を保持します。進捗管理のための `completedAmount` や、計画の編集を容易にする `copyWith` メソッドも提供します。Firestoreとの間でデータを変換するための `fromMap` および `toMap` メソッドを提供します。
     -   `user_settings.dart`: ユーザー固有の設定を保持するデータモデル。日ごとの学習目標 (`dailyGoalInPT`) や、学習を好む曜日 (`preferredStudyDays`) などの情報を含みます。Firestoreとの間でデータを変換するための `fromMap` および `toMap` メソッドを提供します。
 
@@ -39,11 +39,11 @@
     -   `home_screen.dart`: アプリケーションのメイン画面。全体の学習進捗度と学習計画のリストを表示します。ユーザーはここからログアウトできます。
 -   **`lib/screens/plan/`**: 学習計画に関連するウィジェット。
     -   `plan_list_screen.dart`: 登録されているすべての学習計画のリストを表示する画面。各計画をタップすると詳細画面へ遷移し、フローティングアクションボタンから新しい計画を作成できます。
--   **`lib/screens/evaluation_screen.dart`**: 学習記録の入力と評価を行う画面。ポモドーロタイマー終了時や学習計画完了時に遷移し、進捗量と集中度を入力してFirestoreに保存します。
+-   **`lib/screens/evaluation_screen.dart`**: 学習記録の入力と評価を行う画面。ポモドーロタイマー終了時や学習計画完了時に遷移し、進捗量と集中度、難易度を入力してFirestoreに保存します。
 
 -   **`lib/services/`**: **基本精神1: サービス層アーキテクチャ** の中心となるディレクトリです。ビジネスロジック、データ取得、外部サービス（Firebaseなど）との連携をカプセル化します。これにより、UI層からビジネスロジックが分離され、テスト容易性と再利用性が向上します。
     -   `auth_service.dart`: Firebase Authentication を利用した認証関連のすべてのロジックをカプセル化します。ユーザーのサインアップ、ログイン、ログアウト、および認証状態のリアルタイム監視機能を提供します。UI層からはこのサービスを通じて認証操作を行い、Firebaseの低レベルなAPIを直接扱う必要がありません。
-    -   `plan_service.dart`: Firebase Firestore を利用した学習計画 (`StudyPlan`) および学習記録 (`LearningRecord`) のデータ操作に関するすべてのロジックをカプセル化します。学習計画の追加、更新、削除、取得（ストリーム）、学習記録の追加、週間学習データや参考書ごとの学習バランスデータの取得など、データ永続化とビジネスロジックを提供します。また、学習計画と学習記録から日割り目標などの情報を計算する `calculateDailyQuotaInfo` 関数も提供します。ユーザーごとのデータ分離もこのサービスで管理されます。
+    -   `plan_service.dart`: Firebase Firestore を利用した学習計画 (`StudyPlan`) および学習記録 (`LearningRecord`) のデータ操作に関するすべてのロジックをカプセル化します。学習計画の追加、更新、削除、取得（ストリーム）、学習記録の追加、週間学習データや参考書ごとの学習バランスデータの取得など、データ永続化とビジネスロジックを提供します。`getOverallProgress()` メソッドは、今日の総日割り目標と今日の総完了量を返すように変更されました。また、学習計画と学習記録から日割り目標などの情報を計算する `calculateDailyQuotaInfo` 関数も提供します。ユーザーごとのデータ分離もこのサービスで管理されます。
 
 -   **`lib/widgets/`**: アプリケーション全体で再利用可能なUIコンポーネントを格納します。
     -   `app_logo.dart`: アプリケーションのロゴ（アイコンとテキスト）を表示するシンプルなウィジェット。
@@ -58,7 +58,7 @@
         -   `loading_indicator.dart`: データロード中などに表示される汎用的なローディングインジケータ。
         -   `primary_button.dart`: アプリケーション全体で一貫したデザインのプライマリボタン。ローディング状態も表示可能。
     -   **`lib/widgets/home/`**: ホーム画面固有のウィジェット。
-        -   `overall_progress_card.dart`: 全体の学習進捗度をパーセンテージとプログレスバーで表示するカードウィジェット。`PlanService` を介してFirebaseからデータを取得します。
+        -   `overall_progress_card.dart`: 全体の学習進捗度をパーセンテージとプログレスバーで表示するカードウィジェット。`PlanService` を介して今日のノルマ達成率（amountベース）を表示するように変更されました。
         -   `plan_list_preview.dart`: ホーム画面で学習計画のリストをプレビュー表示するウィジェット。`PlanService` を介してFirebaseから学習計画のストリームを取得し、`PlanCard` を使用して各計画を表示します。
 
 ## 認証フロー

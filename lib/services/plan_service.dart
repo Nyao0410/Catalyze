@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:study_ai_assistant/models/learning_record.dart';
 import 'package:study_ai_assistant/models/study_plan.dart';
+import 'package:study_ai_assistant/models/user_settings.dart'; // 追加
 
 class PlanService {
   final _auth = FirebaseAuth.instance;
@@ -27,6 +28,15 @@ class PlanService {
         toFirestore: (record, _) => record.toMap(),
       );
 
+  CollectionReference<UserSettings> get _userSettingsRef => _firestore
+      .collection('users')
+      .doc(_currentUser!.uid)
+      .collection('settings')
+      .withConverter<UserSettings>(
+        fromFirestore: (snapshot, _) => UserSettings.fromMap(snapshot.data()!, snapshot.id),
+        toFirestore: (settings, _) => settings.toMap(),
+      );
+
   Stream<List<StudyPlan>> getPlans() {
     if (_currentUser == null) return Stream.value([]);
     return _plansRef
@@ -49,24 +59,43 @@ class PlanService {
   }
 
   /// 全体の進捗度を計算して返す (0.0 ~ 1.0)
-  Future<double> getOverallProgress() async {
-    if (_currentUser == null) return 0.0;
-    
-    final querySnapshot = await _plansRef.where('isActive', isEqualTo: true).get();
-    if (querySnapshot.docs.isEmpty) return 0.0;
+  Future<Map<String, double>> getOverallProgress() async {
+    if (_currentUser == null) return {'totalDailyQuotaAmount': 0.0, 'totalCompletedAmountToday': 0.0};
 
-    int totalAmountSum = 0;
-    int completedAmountSum = 0;
+    final plansSnapshot = await _plansRef.where('isActive', isEqualTo: true).get();
+    if (plansSnapshot.docs.isEmpty) return {'totalDailyQuotaAmount': 0.0, 'totalCompletedAmountToday': 0.0};
 
-    for (var doc in querySnapshot.docs) {
+    double totalDailyQuotaAmount = 0.0;
+    for (var doc in plansSnapshot.docs) {
       final plan = doc.data();
-      totalAmountSum += plan.totalAmount;
-      completedAmountSum += plan.completedAmount;
-    }
-    
-    if (totalAmountSum == 0) return 0.0;
+      // 各プランの学習記録を取得
+      final recordsSnapshot = await _recordsRef.where('planId', isEqualTo: plan.id).get();
+      final records = recordsSnapshot.docs.map((e) => e.data()).toList();
 
-    return completedAmountSum / totalAmountSum;
+      final dailyQuotaInfo = calculateDailyQuotaInfo(plan, records);
+      // dailyQuotaTextから数値部分を抽出して合計
+      if (dailyQuotaInfo.dailyQuotaText.startsWith('1日あたり約')) {
+        final quotaString = dailyQuotaInfo.dailyQuotaText.replaceAll('1日あたり約', '').replaceAll(plan.unit, '');
+        totalDailyQuotaAmount += double.tryParse(quotaString) ?? 0.0;
+      }
+    }
+
+    // 今日の学習記録の合計amountを取得
+    final now = DateTime.now();
+    final startOfDay = Timestamp.fromDate(DateTime(now.year, now.month, now.day));
+    final endOfDay = Timestamp.fromDate(DateTime(now.year, now.month, now.day, 23, 59, 59));
+
+    final todayRecordsSnapshot = await _recordsRef
+        .where('date', isGreaterThanOrEqualTo: startOfDay)
+        .where('date', isLessThanOrEqualTo: endOfDay)
+        .get();
+
+    double totalCompletedAmountToday = todayRecordsSnapshot.docs.fold<double>(0.0, (currentSum, doc) => currentSum + doc.data().amount);
+
+    return {
+      'totalDailyQuotaAmount': totalDailyQuotaAmount,
+      'totalCompletedAmountToday': totalCompletedAmountToday,
+    };
   }
 
   /// 週間学習データを取得する
@@ -134,6 +163,28 @@ class PlanService {
         .orderBy('date', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+  }
+
+  /// 今日の学習目標PT数を取得する
+  Future<int> getTodayLearningGoal() async {
+    if (_currentUser == null) return 0;
+    final doc = await _userSettingsRef.doc(_currentUser!.uid).get();
+    return doc.data()?.dailyGoalInPT ?? 4; // デフォルトは4PT
+  }
+
+  /// 今日の学習記録から完了したPT数を合計する
+  Future<int> getTodayCompletedPt() async {
+    if (_currentUser == null) return 0;
+    final now = DateTime.now();
+    final startOfDay = Timestamp.fromDate(DateTime(now.year, now.month, now.day));
+    final endOfDay = Timestamp.fromDate(DateTime(now.year, now.month, now.day, 23, 59, 59));
+
+    final querySnapshot = await _recordsRef
+        .where('date', isGreaterThanOrEqualTo: startOfDay)
+        .where('date', isLessThanOrEqualTo: endOfDay)
+        .get();
+
+    return querySnapshot.docs.fold<int>(0, (currentSum, doc) => currentSum + doc.data().ptCount);
   }
 }
 

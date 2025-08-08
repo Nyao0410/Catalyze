@@ -25,6 +25,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
   final PlanService _planService = PlanService();
   final TextEditingController _amountController = TextEditingController();
   double _concentrationLevel = 3.0; // 集中度を保持する変数
+  double _difficultyLevel = 3.0; // 難易度を保持する変数
 
   @override
   void initState() {
@@ -59,6 +60,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
       durationInMinutes: widget.duration.inMinutes,
       ptCount: widget.ptCount,
       concentrationLevel: _concentrationLevel.toInt(),
+      difficulty: _difficultyLevel.toInt(), // 難易度を追加
     );
 
     try {
@@ -123,6 +125,20 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
               onChanged: (double value) {
                 setState(() {
                   _concentrationLevel = value;
+                });
+              },
+            ),
+            const SizedBox(height: 16), // 難易度との間にスペースを追加
+            Text('難易度: ${_difficultyLevel.toInt()}'),
+            Slider(
+              value: _difficultyLevel,
+              min: 1,
+              max: 5,
+              divisions: 4,
+              label: _difficultyLevel.round().toString(),
+              onChanged: (double value) {
+                setState(() {
+                  _difficultyLevel = value;
                 });
               },
             ),

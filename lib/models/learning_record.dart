@@ -9,6 +9,7 @@ class LearningRecord {
   final Timestamp date;
   final int ptCount;
   final int concentrationLevel;
+  final int difficulty;
 
   LearningRecord({
     required this.id,
@@ -19,6 +20,7 @@ class LearningRecord {
     required this.date,
     required this.ptCount,
     required this.concentrationLevel,
+    required this.difficulty,
   });
 
   factory LearningRecord.fromMap(Map<String, dynamic> map, String id) {
@@ -31,6 +33,7 @@ class LearningRecord {
       date: map['date'] ?? Timestamp.now(),
       ptCount: map['ptCount'] ?? 0,
       concentrationLevel: map['concentrationLevel'] ?? 3,
+      difficulty: map['difficulty'] ?? 3,
     );
   }
 
@@ -43,6 +46,7 @@ class LearningRecord {
       'date': date,
       'ptCount': ptCount,
       'concentrationLevel': concentrationLevel,
+      'difficulty': difficulty,
     };
   }
 }
