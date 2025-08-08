@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:study_ai_assistant/models/learning_record.dart';
-import 'package:study_ai_assistant/models/study_plan.dart';
-import 'package:study_ai_assistant/services/plan_service.dart';
+import 'package:catalyze/models/learning_record.dart';
+import 'package:catalyze/models/study_plan.dart';
+import 'package:catalyze/services/plan_service.dart';
 import 'package:uuid/uuid.dart';
 
 class EvaluationScreen extends StatefulWidget {

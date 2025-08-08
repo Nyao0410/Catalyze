@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:study_ai_assistant/constants/app_sizes.dart';
-import 'package:study_ai_assistant/screens/signup_screen.dart';
-import 'package:study_ai_assistant/services/auth_service.dart';
-import 'package:study_ai_assistant/widgets/app_logo.dart';
-import 'package:study_ai_assistant/widgets/error_display.dart';
-import 'package:study_ai_assistant/widgets/common/loading_indicator.dart';
-import 'package:study_ai_assistant/widgets/common/primary_button.dart';
-import 'package:study_ai_assistant/widgets/secondary_button.dart'; // 変更点1: インポートを追加
+import 'package:catalyze/constants/app_sizes.dart';
+import 'package:catalyze/screens/signup_screen.dart';
+import 'package:catalyze/services/auth_service.dart';
+import 'package:catalyze/widgets/app_logo.dart';
+import 'package:catalyze/widgets/error_display.dart';
+import 'package:catalyze/widgets/common/loading_indicator.dart';
+import 'package:catalyze/widgets/common/primary_button.dart';
+import 'package:catalyze/widgets/secondary_button.dart'; // 変更点1: インポートを追加
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

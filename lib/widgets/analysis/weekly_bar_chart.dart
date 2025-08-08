@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:study_ai_assistant/constants/app_sizes.dart';
-import 'package:study_ai_assistant/models/learning_record.dart';
+import 'package:catalyze/constants/app_sizes.dart';
+import 'package:catalyze/models/learning_record.dart';
 
 enum BarChartType { amount, time }
 

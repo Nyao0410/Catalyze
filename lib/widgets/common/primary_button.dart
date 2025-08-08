@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:study_ai_assistant/constants/app_sizes.dart';
+import 'package:catalyze/constants/app_sizes.dart';
 
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({

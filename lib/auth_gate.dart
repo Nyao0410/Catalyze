@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:study_ai_assistant/main_scaffold.dart';
-import 'package:study_ai_assistant/screens/login_screen.dart'; // AuthScreenの代わりにLoginScreenをインポート
-import 'package:study_ai_assistant/services/auth_service.dart';
+import 'package:catalyze/main_scaffold.dart';
+import 'package:catalyze/screens/login_screen.dart'; // AuthScreenの代わりにLoginScreenをインポート
+import 'package:catalyze/services/auth_service.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});

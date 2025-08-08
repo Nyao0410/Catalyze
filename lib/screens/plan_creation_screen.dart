@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:study_ai_assistant/constants/app_sizes.dart';
-import 'package:study_ai_assistant/models/study_plan.dart';
-import 'package:study_ai_assistant/services/plan_service.dart';
-import 'package:study_ai_assistant/widgets/common/primary_button.dart';
+import 'package:catalyze/constants/app_sizes.dart';
+import 'package:catalyze/models/study_plan.dart';
+import 'package:catalyze/services/plan_service.dart';
+import 'package:catalyze/widgets/common/primary_button.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Timestampのために追加
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PlanCreationScreen extends StatefulWidget {
-  // 編集用に既存の計画を受け取れるようにする
   final StudyPlan? plan;
   const PlanCreationScreen({super.key, this.plan});
 
@@ -24,7 +23,7 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
   // --- Form State ---
   late String _title;
   late int _totalAmount;
-  late String _unit;
+  String? _unit; // String? に変更
   late int _predictedPt;
   late DateTime _deadline;
   late String _description;
@@ -32,14 +31,15 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
   late bool _isActive;
   // ------------------
 
+  final List<String> _defaultUnits = ['ページ', '問', '章'];
+
   @override
   void initState() {
     super.initState();
     _isEditing = widget.plan != null;
-    // 編集モードの場合は、既存のデータで初期化
     _title = widget.plan?.title ?? '';
     _totalAmount = widget.plan?.totalAmount ?? 0;
-    _unit = widget.plan?.unit ?? 'ページ';
+    _unit = widget.plan?.unit; // 初期値は既存の単位、なければnull
     _predictedPt = widget.plan?.predictedPt ?? 0;
     _deadline = widget.plan?.deadline?.toDate() ?? DateTime.now().add(const Duration(days: 30));
     _description = widget.plan?.description ?? '';
@@ -62,28 +62,37 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
   }
 
   void _savePlan() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      final planData = StudyPlan(
-        id: widget.plan?.id ?? const Uuid().v4(),
-        title: _title,
-        totalAmount: _totalAmount,
-        createdAt: widget.plan?.createdAt ?? Timestamp.now(),
-        unit: _unit,
-        deadline: Timestamp.fromDate(_deadline),
-        priority: _priority,
-        isActive: _isActive,
-        completedAmount: widget.plan?.completedAmount ?? 0, // 編集時は既存の値を保持
-      );
-
-      final future = _isEditing
-          ? _planService.updatePlan(planData)
-          : _planService.addPlan(planData);
-
-      future.then((_) {
-        if (mounted) Navigator.of(context).pop();
-      });
+    if (!_formKey.currentState!.validate()) {
+      return;
     }
+    _formKey.currentState!.save();
+
+    if (_unit == null || _unit!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('単位を選択してください。')),
+      );
+      return;
+    }
+
+    final planData = StudyPlan(
+      id: widget.plan?.id ?? const Uuid().v4(),
+      title: _title,
+      totalAmount: _totalAmount,
+      createdAt: widget.plan?.createdAt ?? Timestamp.now(),
+      unit: _unit!, // nullチェック
+      deadline: Timestamp.fromDate(_deadline),
+      priority: _priority,
+      isActive: _isActive,
+      completedAmount: widget.plan?.completedAmount ?? 0,
+    );
+
+    final future = _isEditing
+        ? _planService.updatePlan(planData)
+        : _planService.addPlan(planData);
+
+    future.then((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
   }
 
   @override
@@ -121,10 +130,30 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
                 ),
                 gapW16,
                 Expanded(
-                  child: TextFormField(
-                    initialValue: _unit,
-                    decoration: const InputDecoration(labelText: '単位'),
-                    onSaved: (value) => _unit = value!,
+                  child: StreamBuilder<List<String>>(
+                    stream: _planService.getCustomUnits(),
+                    builder: (context, snapshot) {
+                      final customUnits = snapshot.data ?? [];
+                      final allUnits = [..._defaultUnits, ...customUnits];
+                      return DropdownButtonFormField<String>(
+                        value: _unit,
+                        hint: const Text('単位を選択'),
+                        decoration: const InputDecoration(labelText: '単位'),
+                        validator: (value) => value == null || value.isEmpty ? '選択してください' : null,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            _unit = newValue;
+                          });
+                        },
+                        items: allUnits.map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onSaved: (value) => _unit = value,
+                      );
+                    },
                   ),
                 ),
               ],

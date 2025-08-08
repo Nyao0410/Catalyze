@@ -1,6 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:study_ai_assistant/constants/app_sizes.dart';
+import 'package:catalyze/constants/app_sizes.dart';
 
 class BookBalancePieChart extends StatelessWidget {
   const BookBalancePieChart({

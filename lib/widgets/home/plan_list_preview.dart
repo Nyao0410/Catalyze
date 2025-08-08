@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:study_ai_assistant/constants/app_sizes.dart';
-import 'package:study_ai_assistant/models/study_plan.dart';
-import 'package:study_ai_assistant/services/plan_service.dart';
-import 'package:study_ai_assistant/widgets/error_display.dart';
-import 'package:study_ai_assistant/widgets/common/loading_indicator.dart';
-import 'package:study_ai_assistant/widgets/plan_card.dart';
+import 'package:catalyze/constants/app_sizes.dart';
+import 'package:catalyze/models/study_plan.dart';
+import 'package:catalyze/services/plan_service.dart';
+import 'package:catalyze/widgets/error_display.dart';
+import 'package:catalyze/widgets/common/loading_indicator.dart';
+import 'package:catalyze/widgets/plan_card.dart';
 
 class PlanListPreview extends StatelessWidget {
   const PlanListPreview({super.key});

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:study_ai_assistant/models/study_plan.dart';
-import 'package:study_ai_assistant/widgets/pomodoro_timer.dart';
-import 'package:study_ai_assistant/services/plan_service.dart';
-import 'package:study_ai_assistant/models/learning_record.dart';
+import 'package:catalyze/models/study_plan.dart';
+import 'package:catalyze/widgets/pomodoro_timer.dart';
 
-import 'package:study_ai_assistant/screens/evaluation_screen.dart';
-import 'package:study_ai_assistant/widgets/common/primary_button.dart';
+import 'package:catalyze/screens/evaluation_screen.dart';
+import 'package:catalyze/widgets/common/primary_button.dart';
 
 class PlanDetailScreen extends StatefulWidget {
   const PlanDetailScreen({
@@ -20,8 +18,6 @@ class PlanDetailScreen extends StatefulWidget {
 }
 
 class _PlanDetailScreenState extends State<PlanDetailScreen> {
-  final PlanService _planService = PlanService();
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

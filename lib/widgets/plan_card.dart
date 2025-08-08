@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:study_ai_assistant/models/learning_record.dart';
-import 'package:study_ai_assistant/models/study_plan.dart';
-import 'package:study_ai_assistant/screens/plan_creation_screen.dart';
-import 'package:study_ai_assistant/screens/plan_detail_screen.dart';
-import 'package:study_ai_assistant/services/plan_service.dart';
+import 'package:catalyze/models/learning_record.dart';
+import 'package:catalyze/models/study_plan.dart';
+import 'package:catalyze/screens/plan_creation_screen.dart';
+import 'package:catalyze/screens/plan_detail_screen.dart';
+import 'package:catalyze/services/plan_service.dart';
 
 class PlanCard extends StatelessWidget {
   final StudyPlan plan;

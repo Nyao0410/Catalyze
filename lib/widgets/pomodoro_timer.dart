@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:study_ai_assistant/constants/app_sizes.dart';
-import 'package:study_ai_assistant/models/study_plan.dart';
+import 'package:catalyze/constants/app_sizes.dart';
+import 'package:catalyze/models/study_plan.dart';
 
 enum PomodoroState { initial, running, paused, breakTime }
 

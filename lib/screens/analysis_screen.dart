@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:study_ai_assistant/constants/app_sizes.dart';
-import 'package:study_ai_assistant/models/learning_record.dart';
-import 'package:study_ai_assistant/services/plan_service.dart';
-import 'package:study_ai_assistant/widgets/analysis/book_balance_pie_chart.dart';
-import 'package:study_ai_assistant/widgets/analysis/weekly_bar_chart.dart';
-import 'package:study_ai_assistant/widgets/error_display.dart';
-import 'package:study_ai_assistant/widgets/common/loading_indicator.dart';
-import 'package:study_ai_assistant/models/study_plan.dart';
+import 'package:catalyze/constants/app_sizes.dart';
+import 'package:catalyze/models/learning_record.dart';
+import 'package:catalyze/services/plan_service.dart';
+import 'package:catalyze/widgets/analysis/book_balance_pie_chart.dart';
+import 'package:catalyze/widgets/analysis/weekly_bar_chart.dart';
+import 'package:catalyze/widgets/error_display.dart';
+import 'package:catalyze/widgets/common/loading_indicator.dart';
+import 'package:catalyze/models/study_plan.dart';
 import 'package:intl/intl.dart'; // 追加
 
 class AnalysisScreen extends StatefulWidget {

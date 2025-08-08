@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:study_ai_assistant/auth_gate.dart';
-import 'package:study_ai_assistant/constants/app_theme.dart'; // 新しいテーマをインポート
+import 'package:catalyze/auth_gate.dart';
+import 'package:catalyze/constants/app_theme.dart'; // 新しいテーマをインポート
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Study AI Assistant',
+      title: 'Catalyze',
       // 新しいテーマを適用
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

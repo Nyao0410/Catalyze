@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:study_ai_assistant/constants/app_sizes.dart';
-import 'package:study_ai_assistant/services/plan_service.dart';
-import 'package:study_ai_assistant/widgets/common/loading_indicator.dart';
+import 'package:catalyze/constants/app_sizes.dart';
+import 'package:catalyze/services/plan_service.dart';
+import 'package:catalyze/widgets/common/loading_indicator.dart';
 
 class OverallProgressCard extends StatelessWidget {
   const OverallProgressCard({super.key});

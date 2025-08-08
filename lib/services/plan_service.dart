@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:study_ai_assistant/models/learning_record.dart';
-import 'package:study_ai_assistant/models/study_plan.dart';
-import 'package:study_ai_assistant/models/user_settings.dart'; // 追加
+import 'package:catalyze/models/learning_record.dart';
+import 'package:catalyze/models/study_plan.dart';
+import 'package:catalyze/models/user_settings.dart'; // 追加
 
 class PlanService {
   final _auth = FirebaseAuth.instance;
@@ -194,6 +194,36 @@ class PlanService {
         .get();
 
     return querySnapshot.docs.fold<int>(0, (currentSum, doc) => currentSum + doc.data().ptCount);
+  }
+
+  /// カスタム単位を追加する
+  Future<void> addCustomUnit(String unit) async {
+    if (_currentUser == null) return;
+    final userSettingsDoc = await _userSettingsRef.doc(_currentUser!.uid).get();
+    UserSettings settings = userSettingsDoc.data() ?? UserSettings(userId: _currentUser!.uid);
+    if (!settings.customUnits.contains(unit)) {
+      settings.customUnits.add(unit);
+      await _userSettingsRef.doc(_currentUser!.uid).set(settings);
+    }
+  }
+
+  /// カスタム単位を削除する
+  Future<void> deleteCustomUnit(String unit) async {
+    if (_currentUser == null) return;
+    final userSettingsDoc = await _userSettingsRef.doc(_currentUser!.uid).get();
+    UserSettings settings = userSettingsDoc.data() ?? UserSettings(userId: _currentUser!.uid);
+    if (settings.customUnits.contains(unit)) {
+      settings.customUnits.remove(unit);
+      await _userSettingsRef.doc(_currentUser!.uid).set(settings);
+    }
+  }
+
+  /// カスタム単位のリストを取得する
+  Stream<List<String>> getCustomUnits() {
+    if (_currentUser == null) return Stream.value([]);
+    return _userSettingsRef.doc(_currentUser!.uid).snapshots().map((snapshot) {
+      return snapshot.data()?.customUnits ?? [];
+    });
   }
 }
 

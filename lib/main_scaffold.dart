@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:study_ai_assistant/screens/analysis_screen.dart';
-import 'package:study_ai_assistant/screens/home/home_screen.dart'; // 修正
-import 'package:study_ai_assistant/screens/settings_screen.dart';
+import 'package:catalyze/screens/analysis_screen.dart';
+import 'package:catalyze/screens/home/home_screen.dart'; // 修正
+import 'package:catalyze/screens/settings_screen.dart';
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
