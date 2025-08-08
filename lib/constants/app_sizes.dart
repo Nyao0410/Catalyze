@@ -7,6 +7,8 @@ const double p12 = 12.0;
 const double p16 = 16.0;
 const double p24 = 24.0;
 const double p32 = 32.0;
+const double p48 = 48.0;
+const double p64 = 64.0;
 
 // --- Corner Radius ---
 const double radiusS = 4.0;

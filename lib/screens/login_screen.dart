@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:study_ai_assistant/constants/app_sizes.dart';
 import 'package:study_ai_assistant/screens/signup_screen.dart';
 import 'package:study_ai_assistant/services/auth_service.dart';
+import 'package:study_ai_assistant/widgets/app_logo.dart';
+import 'package:study_ai_assistant/widgets/error_display.dart';
+import 'package:study_ai_assistant/widgets/common/loading_indicator.dart';
 import 'package:study_ai_assistant/widgets/common/primary_button.dart';
+import 'package:study_ai_assistant/widgets/secondary_button.dart'; // 変更点1: インポートを追加
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,35 +16,40 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>(); // ここを修正
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
+  // 変更点2: エラーメッセージを管理する状態変数を追加
+  String? _errorMessage;
 
   Future<void> _login() async {
-    if (_formKey.currentState!.validate() && !_isLoading) {
+    if (!_formKey.currentState!.validate()) { // バリデーションが失敗したら処理を中断
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      // 変更点3: 試行時に過去のエラーメッセージをクリア
+      _errorMessage = null;
+    });
+
+    try {
+      await _authService.logIn(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      // 成功した場合、AuthWrapperが自動的にホーム画面へ遷移させる
+    } catch (e) {
+      // 変更点4: catch節でエラーメッセージをsetState
       setState(() {
-        _isLoading = true;
+        _errorMessage = e.toString();
       });
-      try {
-        await _authService.logIn(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('ログインに失敗しました: ${e.toString()}')),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -55,39 +64,48 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(p24),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('ログイン', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                gapH24,
+                const AppLogo(),
+                const SizedBox(height: p32),
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'メールアドレス'),
+                  keyboardType: TextInputType.emailAddress,
                   validator: (value) => value!.isEmpty ? '入力してください' : null,
                 ),
-                gapH8,
+                const SizedBox(height: p16),
                 TextFormField(
                   controller: _passwordController,
                   decoration: const InputDecoration(labelText: 'パスワード'),
                   obscureText: true,
                   validator: (value) => value!.isEmpty ? '入力してください' : null,
                 ),
-                gapH24,
-                PrimaryButton(
-                  onPressed: _login,
-                  text: 'ログイン',
-                  isLoading: _isLoading,
-                ),
-                TextButton(
-                  onPressed: _isLoading ? null : () {
+                const SizedBox(height: p24),
+                if (_errorMessage != null) ...[
+                  ErrorDisplay(errorMessage: _errorMessage!),
+                  const SizedBox(height: p24),
+                ],
+                if (_isLoading)
+                  const LoadingIndicator()
+                else
+                  PrimaryButton(
+                    onPressed: _login,
+                    text: 'ログイン',
+                  ),
+                const SizedBox(height: p16),
+                SecondaryButton(
+                  onPressed: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const SignUpScreen()));
                   },
-                  child: const Text('新規登録はこちら'),
-                ),
+                  text: 'アカウント作成はこちら',
+                )
               ],
             ),
           ),
