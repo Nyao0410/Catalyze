@@ -31,7 +31,7 @@ class PlanCard extends StatelessWidget {
         return AlertDialog(
           title: const Text('計画の削除'),
           content: Text('「${plan.title}」を本当に削除しますか？この操作は元に戻せません。'),
-          actions: <Widget>[ 
+          actions: <Widget>[
             TextButton(
               child: const Text('キャンセル'),
               onPressed: () {
@@ -41,7 +41,7 @@ class PlanCard extends StatelessWidget {
             TextButton(
               child: const Text('削除', style: TextStyle(color: Colors.redAccent)),
               onPressed: () {
-                _planService.deletePlan(plan.id); // 修正
+                _planService.deletePlan(plan.id);
                 Navigator.of(context).pop();
               },
             ),
@@ -54,28 +54,10 @@ class PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<LearningRecord>>(
-      stream: _planService.getLearningRecords(plan.id), // 修正
+      stream: _planService.getLearningRecords(plan.id),
       builder: (context, snapshot) {
         final records = snapshot.data ?? [];
-        final double pagesCompleted = records.fold<double>(0.0, (sum, record) => sum + record.amount);
-        final progress = plan.totalAmount > 0 ? pagesCompleted / plan.totalAmount : 0.0;
-        final double remainingPages = plan.totalAmount - pagesCompleted;
-
-        final now = DateTime.now();
-        final totalDuration = plan.deadline?.toDate().difference(plan.createdAt.toDate()).inDays ?? 0;
-        final bufferDays = (totalDuration * 0.2).floor();
-        final effectiveTargetDate = plan.deadline?.toDate().subtract(Duration(days: bufferDays)) ?? now;
-        final remainingDays = effectiveTargetDate.difference(now).inDays;
-        
-        String dailyQuotaText;
-        if (remainingPages <= 0) {
-          dailyQuotaText = '完了！';
-        } else if (remainingDays <= 0) {
-          dailyQuotaText = '本日中に${remainingPages.toStringAsFixed(1)}${plan.unit}';
-        } else {
-          final dailyQuota = remainingPages / remainingDays;
-          dailyQuotaText = '1日あたり約${dailyQuota.toStringAsFixed(1)}${plan.unit}';
-        }
+        final dailyQuotaInfo = calculateDailyQuotaInfo(plan, records);
 
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -117,27 +99,27 @@ class PlanCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text(dailyQuotaText, style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodySmall?.color?.withAlpha(204))),
+                  Text(dailyQuotaInfo.dailyQuotaText, style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodySmall?.color?.withAlpha(204))),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text('進捗率', style: TextStyle(fontSize: 14)),
-                      Text('${(progress * 100).toStringAsFixed(0)}%', style: const TextStyle(fontSize: 14)),
+                      Text('${(dailyQuotaInfo.progress * 100).toStringAsFixed(0)}%', style: const TextStyle(fontSize: 14)),
                     ],
                   ),
                   const SizedBox(height: 4),
                   LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: Colors.grey.withAlpha(76), // withOpacity(0.3) -> withAlpha(0.3 * 255) = 76.5
-                    valueColor: AlwaysStoppedAnimation<Color>(Color.lerp(Colors.redAccent, Colors.greenAccent, progress)!),
+                    value: dailyQuotaInfo.progress,
+                    backgroundColor: Colors.grey.withAlpha(76),
+                    valueColor: AlwaysStoppedAnimation<Color>(Color.lerp(Colors.redAccent, Colors.greenAccent, dailyQuotaInfo.progress)!),
                   ),
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerRight,
                     child: Text(
-                      '目標日まであと${plan.deadline?.toDate().difference(DateTime.now()).inDays ?? 0}日', // 修正
-                      style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color?.withAlpha(153)), // withOpacity(0.6) -> withAlpha(0.6 * 255) = 153
+                      '目標日まであと${plan.deadline?.toDate().difference(DateTime.now()).inDays ?? 0}日',
+                      style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color?.withAlpha(153)),
                     ),
                   ),
                 ],

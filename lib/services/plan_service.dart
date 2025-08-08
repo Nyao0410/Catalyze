@@ -136,3 +136,46 @@ class PlanService {
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 }
+
+class DailyQuotaInfo {
+  final double pagesCompleted;
+  final double progress;
+  final double remainingPages;
+  final String dailyQuotaText;
+
+  DailyQuotaInfo({
+    required this.pagesCompleted,
+    required this.progress,
+    required this.remainingPages,
+    required this.dailyQuotaText,
+  });
+}
+
+DailyQuotaInfo calculateDailyQuotaInfo(StudyPlan plan, List<LearningRecord> records) {
+  final double pagesCompleted = records.fold<double>(0.0, (currentSum, record) => currentSum + record.amount);
+  final progress = plan.totalAmount > 0 ? pagesCompleted / plan.totalAmount : 0.0;
+  final double remainingPages = plan.totalAmount - pagesCompleted;
+
+  final now = DateTime.now();
+  final totalDuration = plan.deadline?.toDate().difference(plan.createdAt.toDate()).inDays ?? 0;
+  final bufferDays = (totalDuration * 0.2).floor();
+  final effectiveTargetDate = plan.deadline?.toDate().subtract(Duration(days: bufferDays)) ?? now;
+  final remainingDays = effectiveTargetDate.difference(now).inDays;
+
+  String dailyQuotaText;
+  if (remainingPages <= 0) {
+    dailyQuotaText = '完了！';
+  } else if (remainingDays <= 0) {
+    dailyQuotaText = '本日中に${remainingPages.toStringAsFixed(1)}${plan.unit}';
+  } else {
+    final dailyQuota = remainingPages / remainingDays;
+    dailyQuotaText = '1日あたり約${dailyQuota.toStringAsFixed(1)}${plan.unit}';
+  }
+
+  return DailyQuotaInfo(
+    pagesCompleted: pagesCompleted,
+    progress: progress,
+    remainingPages: remainingPages,
+    dailyQuotaText: dailyQuotaText,
+  );
+}

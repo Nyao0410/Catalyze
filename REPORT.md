@@ -32,22 +32,23 @@
     -   `learning_screen.dart`: 学習アクティビティを行うための画面。現在「準備中」のプレースホルダーが表示されています。
     -   `login_screen.dart`: ユーザーがメールアドレスとパスワードでログインするための画面。ログインフォーム、エラー表示、ローディングインジケータ、サインアップ画面への遷移ボタンを提供します。
     -   `plan_creation_screen.dart`: 新しい学習計画を作成、または既存の学習計画を編集するためのフォーム画面。参考書名、総量、単位、予測PT、目標日、説明、優先度などを入力できます。
-    -   `plan_detail_screen.dart`: 特定の学習計画の詳細を表示し、ポモドーロタイマーと学習記録のリストを提供する画面。タイマー終了時には学習記録の入力ダイアログが表示され、Firestoreに保存されます。
-    -   `settings_screen.dart`: アプリケーションの設定を行うための画面。現在「準備中」のプレースホルダーが表示されており、ログアウト機能を提供します。
-    -   `signup_screen.dart`: ユーザーが新しいアカウントを作成するための画面。サインアップフォーム、エラー表示、ローディングインジケータ、ログイン画面への遷移ボタンを提供します。
-    -   **`lib/screens/home/`**: ホーム画面に関連するウィジェット。
-        -   `home_screen.dart`: アプリケーションのメイン画面。全体の学習進捗度と学習計画のリストを表示します。ユーザーはここからログアウトできます。
-    -   **`lib/screens/plan/`**: 学習計画に関連するウィジェット。
-        -   `plan_list_screen.dart`: 登録されているすべての学習計画のリストを表示する画面。各計画をタップすると詳細画面へ遷移し、フローティングアクションボタンから新しい計画を作成できます。
+    -   `plan_detail_screen.dart`: 特定の学習計画の詳細を表示し、ポモドーロタイマーと学習記録のリストを提供する画面。タイマー終了時や完了ボタン押下時に、学習記録の入力とFirestoreへの保存を行う `EvaluationScreen` へ遷移します。
+-   `settings_screen.dart`: アプリケーションの設定を行うための画面。現在「準備中」のプレースホルダーが表示されており、ログアウト機能を提供します。
+-   `signup_screen.dart`: ユーザーが新しいアカウントを作成するための画面。サインアップフォーム、エラー表示、ローディングインジケータ、ログイン画面への遷移ボタンを提供します。
+-   **`lib/screens/home/`**: ホーム画面に関連するウィジェット。
+    -   `home_screen.dart`: アプリケーションのメイン画面。全体の学習進捗度と学習計画のリストを表示します。ユーザーはここからログアウトできます。
+-   **`lib/screens/plan/`**: 学習計画に関連するウィジェット。
+    -   `plan_list_screen.dart`: 登録されているすべての学習計画のリストを表示する画面。各計画をタップすると詳細画面へ遷移し、フローティングアクションボタンから新しい計画を作成できます。
+-   **`lib/screens/evaluation_screen.dart`**: 学習記録の入力と評価を行う画面。ポモドーロタイマー終了時や学習計画完了時に遷移し、進捗量と集中度を入力してFirestoreに保存します。
 
 -   **`lib/services/`**: **基本精神1: サービス層アーキテクチャ** の中心となるディレクトリです。ビジネスロジック、データ取得、外部サービス（Firebaseなど）との連携をカプセル化します。これにより、UI層からビジネスロジックが分離され、テスト容易性と再利用性が向上します。
     -   `auth_service.dart`: Firebase Authentication を利用した認証関連のすべてのロジックをカプセル化します。ユーザーのサインアップ、ログイン、ログアウト、および認証状態のリアルタイム監視機能を提供します。UI層からはこのサービスを通じて認証操作を行い、Firebaseの低レベルなAPIを直接扱う必要がありません。
-    -   `plan_service.dart`: Firebase Firestore を利用した学習計画 (`StudyPlan`) および学習記録 (`LearningRecord`) のデータ操作に関するすべてのロジックをカプセル化します。学習計画の追加、更新、削除、取得（ストリーム）、学習記録の追加、週間学習データや参考書ごとの学習バランスデータの取得など、データ永続化とビジネスロジックを提供します。ユーザーごとのデータ分離もこのサービスで管理されます。
+    -   `plan_service.dart`: Firebase Firestore を利用した学習計画 (`StudyPlan`) および学習記録 (`LearningRecord`) のデータ操作に関するすべてのロジックをカプセル化します。学習計画の追加、更新、削除、取得（ストリーム）、学習記録の追加、週間学習データや参考書ごとの学習バランスデータの取得など、データ永続化とビジネスロジックを提供します。また、学習計画と学習記録から日割り目標などの情報を計算する `calculateDailyQuotaInfo` 関数も提供します。ユーザーごとのデータ分離もこのサービスで管理されます。
 
 -   **`lib/widgets/`**: アプリケーション全体で再利用可能なUIコンポーネントを格納します。
     -   `app_logo.dart`: アプリケーションのロゴ（アイコンとテキスト）を表示するシンプルなウィジェット。
     -   `error_display.dart`: エラーメッセージとエラーアイコンを表示する汎用的なウィジェット。
-    -   `plan_card.dart`: 個々の学習計画の詳細（進捗率、残り日数、日割り目標など）を表示するカードウィジェット。学習記録のストリームを監視し、進捗をリアルタイムで更新します。計画の編集・削除機能も提供します。
+    -   `plan_card.dart`: 個々の学習計画の詳細（進捗率、残り日数、日割り目標など）を表示するカードウィジェット。学習記録のストリームを監視し、進捗をリアルタイムで更新します。日割り目標などの計算ロジックは `PlanService` に分離されました。計画の編集・削除機能も提供します。
     -   `pomodoro_timer.dart`: ポモドーロタイマー機能を提供するウィジェット。集中時間と休憩時間を管理し、タイマーの開始、一時停止、リセット機能を提供します。タイマー終了時にはコールバックを呼び出します。
     -   `secondary_button.dart`: アプリケーション全体で一貫したデザインのセカンダリボタン。
     -   **`lib/widgets/analysis/`**: 分析画面固有のウィジェット。
@@ -76,8 +77,5 @@
 ## flutter analyze 結果
 
 ```
-   info • Unnecessary braces in a string interpolation • lib/screens/plan_detail_screen.dart:47:33 • unnecessary_brace_in_string_interps
-   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/plan_detail_screen.dart:114:36 • use_build_context_synchronously
-   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/plan_detail_screen.dart:115:44 • use_build_context_synchronously
-   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/plan_detail_screen.dart:120:44 • use_build_context_synchronously
+No issues found!
 ```

@@ -7,6 +7,7 @@ import 'package:study_ai_assistant/widgets/home/overall_progress_card.dart';
 import 'package:study_ai_assistant/widgets/plan_card.dart';
 import 'package:study_ai_assistant/services/plan_service.dart'; // 追加
 import 'package:study_ai_assistant/models/study_plan.dart'; // 追加
+import 'package:study_ai_assistant/screens/plan_creation_screen.dart'; // 追加
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -72,6 +73,19 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
           ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PlanCreationScreen()),
+          );
+        },
+        backgroundColor: colorScheme.primary,
+        child: Icon(
+          Icons.add,
+          color: colorScheme.onPrimary,
         ),
       ),
     );
