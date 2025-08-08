@@ -1,3 +1,4 @@
+import 'package:catalyze/src/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:catalyze/src/features/plan/models/study_plan.dart';
 import 'package:catalyze/src/features/evaluation/widgets/pomodoro_timer.dart';
@@ -66,7 +67,7 @@ class _PlanDetailScreenState extends State<PlanDetailScreen> {
                     ),
                   );
                 },
-                text: '学習計画を完了する',
+                text: AppStrings.planComplete,
               ),
             ],
           ),

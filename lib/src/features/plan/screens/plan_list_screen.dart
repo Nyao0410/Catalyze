@@ -1,3 +1,4 @@
+import 'package:catalyze/src/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:catalyze/src/constants/app_sizes.dart';
 import 'package:catalyze/src/features/plan/models/study_plan.dart';
@@ -24,7 +25,7 @@ class _PlanListScreenState extends State<PlanListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('学習計画'),
+        title: const Text(AppStrings.studyPlans),
         backgroundColor: colorScheme.surface,
         elevation: 0,
       ),
@@ -36,11 +37,11 @@ class _PlanListScreenState extends State<PlanListScreen> {
             return const LoadingIndicator();
           }
           if (snapshot.hasError) {
-            return ErrorDisplay(errorMessage: '計画の読み込みに失敗しました: ${snapshot.error}');
+            return ErrorDisplay(errorMessage: '${AppStrings.planListError}: ${snapshot.error}');
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(
-              child: Text('まだ学習計画がありません。'),
+              child: Text(AppStrings.noStudyPlans),
             );
           }
 
@@ -74,7 +75,7 @@ class _PlanListScreenState extends State<PlanListScreen> {
                     ),
                   ),
                   subtitle: Text(
-                    '総量 ${plan.totalAmount} ${plan.unit}', // 修正
+                    '${AppStrings.planTotalAmount} ${plan.totalAmount} ${plan.unit}', // 修正
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurface.withAlpha(178), // 0.7 * 255 = 178.5
                     ),

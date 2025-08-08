@@ -1,3 +1,4 @@
+import 'package:catalyze/src/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:catalyze/src/constants/app_sizes.dart';
 import 'package:catalyze/src/features/auth/screens/signup_screen.dart';
@@ -76,16 +77,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: p32),
                 TextFormField(
                   controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'メールアドレス'),
+                  decoration: const InputDecoration(labelText: AppStrings.emailAddress),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) => value!.isEmpty ? '入力してください' : null,
+                  validator: (value) => value!.isEmpty ? AppStrings.pleaseInput : null,
                 ),
                 const SizedBox(height: p16),
                 TextFormField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'パスワード'),
+                  decoration: const InputDecoration(labelText: AppStrings.password),
                   obscureText: true,
-                  validator: (value) => value!.isEmpty ? '入力してください' : null,
+                  validator: (value) => value!.isEmpty ? AppStrings.pleaseInput : null,
                 ),
                 const SizedBox(height: p24),
                 if (_errorMessage != null) ...[
@@ -97,14 +98,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 else
                   PrimaryButton(
                     onPressed: _login,
-                    text: 'ログイン',
+                    text: AppStrings.login,
                   ),
                 const SizedBox(height: p16),
                 SecondaryButton(
                   onPressed: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const SignUpScreen()));
                   },
-                  text: 'アカウント作成はこちら',
+                  text: AppStrings.toSignupScreen,
                 )
               ],
             ),

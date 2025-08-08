@@ -1,3 +1,4 @@
+import 'package:catalyze/src/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:catalyze/src/constants/app_sizes.dart';
 import 'package:catalyze/src/features/auth/services/auth_service.dart';
@@ -68,13 +69,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: p32),
               TextField(
                 controller: _emailController,
-                decoration: const InputDecoration(labelText: 'メールアドレス'),
+                decoration: const InputDecoration(labelText: AppStrings.emailAddress),
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: p16),
               TextField(
                 controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'パスワード'),
+                decoration: const InputDecoration(labelText: AppStrings.password),
                 obscureText: true,
               ),
               const SizedBox(height: p24),
@@ -88,13 +89,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
               else
                 PrimaryButton(
                   onPressed: _signUp,
-                  text: 'アカウントを作成',
+                  text: AppStrings.signup,
                 ),
               const SizedBox(height: p16),
               // 変更点6: ログイン画面への遷移をSecondaryButtonに変更
               SecondaryButton(
                 onPressed: () => Navigator.pop(context),
-                text: 'ログインはこちら',
+                text: AppStrings.toLoginScreen,
               )
             ],
           ),

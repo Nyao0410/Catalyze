@@ -1,3 +1,4 @@
+import 'package:catalyze/src/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:catalyze/src/features/auth/widgets/auth_gate.dart';
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Catalyze',
+      title: AppStrings.appName,
       // 新しいテーマを適用
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

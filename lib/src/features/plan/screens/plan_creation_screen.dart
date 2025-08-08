@@ -1,3 +1,4 @@
+import 'package:catalyze/src/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:catalyze/src/constants/app_sizes.dart';
 import 'package:catalyze/src/features/plan/models/study_plan.dart';
@@ -69,7 +70,7 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
 
     if (_unit == null || _unit!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('単位を選択してください。')),
+        const SnackBar(content: Text(AppStrings.planSelectUnitError)),
       );
       return;
     }
@@ -98,7 +99,7 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? '計画を編集' : '新しい学習計画を作成')),
+      appBar: AppBar(title: Text(_isEditing ? AppStrings.planEdit : AppStrings.planCreation)),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -106,14 +107,14 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
           children: [
             TextFormField(
               initialValue: _title,
-              decoration: const InputDecoration(labelText: '参考書名・タイトル'),
-              validator: (value) => value!.isEmpty ? '入力してください' : null,
+              decoration: const InputDecoration(labelText: AppStrings.planTitle),
+              validator: (value) => value!.isEmpty ? AppStrings.pleaseInput : null,
               onSaved: (value) => _title = value!,
             ),
             gapH16,
             TextFormField(
               initialValue: _description,
-              decoration: const InputDecoration(labelText: '説明（任意）'),
+              decoration: const InputDecoration(labelText: AppStrings.planDescription),
               onSaved: (value) => _description = value ?? '',
             ),
             gapH16,
@@ -122,9 +123,9 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
                 Expanded(
                   child: TextFormField(
                     initialValue: _totalAmount.toString(),
-                    decoration: const InputDecoration(labelText: '総量'),
+                    decoration: const InputDecoration(labelText: AppStrings.planTotalAmount),
                     keyboardType: TextInputType.number,
-                    validator: (value) => value!.isEmpty ? '入力' : null,
+                    validator: (value) => value!.isEmpty ? AppStrings.pleaseInput : null,
                     onSaved: (value) => _totalAmount = int.parse(value!),
                   ),
                 ),
@@ -137,9 +138,9 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
                       final allUnits = [..._defaultUnits, ...customUnits];
                       return DropdownButtonFormField<String>(
                         value: _unit,
-                        hint: const Text('単位を選択'),
-                        decoration: const InputDecoration(labelText: '単位'),
-                        validator: (value) => value == null || value.isEmpty ? '選択してください' : null,
+                        hint: const Text(AppStrings.planSelectUnit),
+                        decoration: const InputDecoration(labelText: AppStrings.planUnit),
+                        validator: (value) => value == null || value.isEmpty ? AppStrings.pleaseSelect : null,
                         onChanged: (String? newValue) {
                           setState(() {
                             _unit = newValue;
@@ -161,13 +162,13 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
             gapH16,
             TextFormField(
               initialValue: _predictedPt.toString(),
-              decoration: const InputDecoration(labelText: '予測PT（25分=1PT）'),
+              decoration: const InputDecoration(labelText: AppStrings.planPredictedPt),
               keyboardType: TextInputType.number,
-              validator: (value) => value!.isEmpty ? '入力' : null,
+              validator: (value) => value!.isEmpty ? AppStrings.pleaseInput : null,
               onSaved: (value) => _predictedPt = int.parse(value!), 
             ),
             gapH24,
-            const Text('初期難易度', style: TextStyle(fontSize: 16)),
+            const Text(AppStrings.planInitialDifficulty, style: TextStyle(fontSize: 16)),
             _StarRating(
               rating: _priority, // priorityを難易度として使用
               onRatingChanged: (rating) => setState(() => _priority = rating),
@@ -177,17 +178,17 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    '目標日: ${DateFormat('yyyy/MM/dd').format(_deadline)}',
+                    '${AppStrings.planSelectDate}: ${DateFormat('yyyy/MM/dd').format(_deadline)}',
                   ),
                 ),
                 TextButton(
                   onPressed: () => _selectDate(context),
-                  child: const Text('日付を選択'),
+                  child: const Text(AppStrings.planSelectDate),
                 ),
               ],
             ),
             gapH32,
-            PrimaryButton(onPressed: _savePlan, text: _isEditing ? '更新する' : '保存する'),
+            PrimaryButton(onPressed: _savePlan, text: _isEditing ? AppStrings.update : AppStrings.save),
           ],
         ),
       ),

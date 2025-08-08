@@ -1,3 +1,4 @@
+import 'package:catalyze/src/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:catalyze/src/features/evaluation/models/learning_record.dart';
@@ -56,7 +57,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
     final amount = double.tryParse(_amountController.text) ?? 0.0;
     if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('進捗量を正しく入力してください。')),
+        const SnackBar(content: Text(AppStrings.evaluationInputError)),
       );
       return;
     }
@@ -84,12 +85,12 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
       if (!mounted) return;
       Navigator.of(context).popUntil((route) => route.isFirst); // ホーム画面に戻る
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('学習記録を保存しました！')),
+        const SnackBar(content: Text(AppStrings.evaluationSaveSuccess)),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('記録の保存に失敗しました: $e')),
+        SnackBar(content: Text(AppStrings.evaluationSaveFailure(e.toString()))),
       );
     }
   }
@@ -98,7 +99,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('学習の評価'),
+        title: const Text(AppStrings.evaluationTitle),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -106,12 +107,12 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              '学習お疲れ様でした！',
+              AppStrings.evaluationMessage,
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 20),
             Text(
-              widget.ptCount > 0 ? 'ポモドーロ ${widget.ptCount} 回 (${widget.duration.inMinutes} 分) が終了しました。' : '学習計画を完了します。',
+              widget.ptCount > 0 ? AppStrings.evaluationPomodoroMessage(widget.ptCount, widget.duration.inMinutes) : AppStrings.evaluationCompleteMessage,
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
@@ -140,8 +141,8 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
                     controller: _amountController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: '進捗量 (${widget.plan.unit})',
-                      hintText: '例: 10',
+                      labelText: AppStrings.evaluationProgressAmountWithUnit(widget.plan.unit),
+                      hintText: AppStrings.evaluationExampleHint,
                     ),
                   ),
                 ),
@@ -149,7 +150,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
             ),
             const SizedBox(height: 16),
             // 集中度
-            const Text('集中度'),
+            const Text(AppStrings.evaluationConcentration),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: List.generate(3, (index) {
@@ -166,7 +167,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
             ),
             const SizedBox(height: 16),
             // 難易度
-            const Text('難易度'),
+            const Text(AppStrings.evaluationDifficulty),
             _StarRating(
               rating: _difficultyLevel,
               onRatingChanged: (rating) => setState(() => _difficultyLevel = rating),
@@ -174,14 +175,14 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
             const SizedBox(height: 40),
             PrimaryButton(
               onPressed: _saveLearningRecord,
-              text: '記録して完了',
+              text: AppStrings.evaluationSaveAndComplete,
             ),
             const SizedBox(height: 16), // ボタン間のスペース
             SecondaryButton(
               onPressed: () {
                 Navigator.of(context).pop(); // 評価せずに戻る
               },
-              text: 'キャンセル',
+              text: AppStrings.cancel,
             ),
           ],
         ),

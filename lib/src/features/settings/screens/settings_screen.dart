@@ -1,3 +1,4 @@
+import 'package:catalyze/src/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:catalyze/src/features/auth/services/auth_service.dart';
 import 'package:catalyze/src/features/plan/services/plan_service.dart'; // 追加
@@ -27,20 +28,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('新しい単位を追加'),
+          title: const Text(AppStrings.addNewUnit),
           content: TextField(
             controller: _unitController,
-            decoration: const InputDecoration(hintText: '例: ページ, 問'),
+            decoration: const InputDecoration(hintText: AppStrings.unitExampleHint),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('キャンセル'),
+              child: const Text(AppStrings.cancel),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: const Text('追加'),
+              child: const Text(AppStrings.add),
               onPressed: () async {
                 if (_unitController.text.isNotEmpty) {
                   await _planService.addCustomUnit(_unitController.text);
@@ -61,12 +62,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('単位を削除'),
+          title: const Text(AppStrings.deleteUnit),
           content: StatefulBuilder(
             builder: (context, setStateInDialog) {
               return DropdownButton<String>(
                 isExpanded: true,
-                hint: const Text('削除する単位を選択'),
+                hint: const Text(AppStrings.selectUnitToDelete),
                 value: selectedUnit,
                 onChanged: (String? newValue) {
                   setStateInDialog(() {
@@ -84,13 +85,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('キャンセル'),
+              child: const Text(AppStrings.cancel),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: const Text('削除'),
+              child: const Text(AppStrings.delete),
               onPressed: () async {
                 if (selectedUnit != null) {
                   await _planService.deleteCustomUnit(selectedUnit!);
@@ -113,7 +114,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('設定'),
+        title: const Text(AppStrings.settings),
         backgroundColor: colorScheme.surface,
         elevation: 0,
       ),
@@ -124,7 +125,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // アカウントセクション
-            Text('アカウント', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text(AppStrings.account, style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: p8),
             Card(
               elevation: 0,
@@ -144,7 +145,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _authService.currentUser?.email ?? 'ゲストユーザー', // ユーザー名モック
+                                _authService.currentUser?.email ?? AppStrings.guestUser, // ユーザー名モック
                                 style: textTheme.titleMedium,
                               ),
                               // TODO: アカウント名とアイコンを追加する
@@ -159,7 +160,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         await _authService.logOut();
                       },
                       icon: const Icon(Icons.logout),
-                      label: const Text('ログアウト'),
+                      label: const Text(AppStrings.logout),
                     ),
                   ],
                 ),
@@ -168,7 +169,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: p24),
 
             // テーマセクション
-            Text('テーマ', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text(AppStrings.theme, style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: p8),
             Card(
               elevation: 0,
@@ -179,10 +180,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('アプリのテーマを選択', style: textTheme.titleMedium),
+                    Text(AppStrings.selectTheme, style: textTheme.titleMedium),
                     const SizedBox(height: p8),
                     // TODO: ポップメニューでカラー選択を実装
-                    Text('現在のテーマ: システム設定', style: textTheme.bodyMedium),
+                    Text(AppStrings.currentTheme, style: textTheme.bodyMedium),
                   ],
                 ),
               ),
@@ -190,7 +191,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: p24),
 
             // 単位管理セクション
-            Text('単位管理', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text(AppStrings.unitManagement, style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: p8),
             Card(
               elevation: 0,
@@ -201,7 +202,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('カスタム単位', style: textTheme.titleMedium),
+                    Text(AppStrings.customUnits, style: textTheme.titleMedium),
                     const SizedBox(height: p8),
                     StreamBuilder<List<String>>(
                       stream: _planService.getCustomUnits(),
@@ -210,14 +211,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           return const CircularProgressIndicator();
                         }
                         if (snapshot.hasError) {
-                          return Text('エラー: ${snapshot.error}');
+                          return Text('${AppStrings.error}: ${snapshot.error}');
                         }
                         final customUnits = snapshot.data ?? [];
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if (customUnits.isEmpty)
-                              const Text('まだカスタム単位がありません。')
+                              const Text(AppStrings.noCustomUnits)
                             else
                               Wrap(
                                 spacing: p8,
@@ -234,7 +235,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   child: ElevatedButton.icon(
                                     onPressed: _showAddUnitDialog,
                                     icon: const Icon(Icons.add),
-                                    label: const Text('単位を追加'),
+                                    label: const Text(AppStrings.addUnit),
                                   ),
                                 ),
                                 const SizedBox(width: p8),
@@ -242,7 +243,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   child: ElevatedButton.icon(
                                     onPressed: customUnits.isEmpty ? null : () => _showDeleteUnitDialog(customUnits),
                                     icon: const Icon(Icons.delete),
-                                    label: const Text('単位を削除'),
+                                    label: const Text(AppStrings.deleteUnit),
                                   ),
                                 ),
                               ],

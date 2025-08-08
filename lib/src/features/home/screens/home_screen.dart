@@ -1,4 +1,5 @@
 
+import 'package:catalyze/src/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:catalyze/src/constants/app_sizes.dart';
 import 'package:catalyze/src/features/auth/services/auth_service.dart';
@@ -26,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('ホーム'),
+        title: const Text(AppStrings.home),
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
@@ -44,10 +45,10 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle(context, '今日の進捗'),
+            _buildSectionTitle(context, AppStrings.todayProgress),
             const OverallProgressCard(),
             const SizedBox(height: p24),
-            _buildSectionTitle(context, '学習計画'),
+            _buildSectionTitle(context, AppStrings.studyPlans),
             StreamBuilder<List<StudyPlan>>(
               stream: _planService.getPlans(),
               builder: (context, snapshot) {
@@ -55,10 +56,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  return Center(child: Text('エラー: ${snapshot.error}'));
+                  return Center(child: Text('${AppStrings.error}: ${snapshot.error}'));
                 }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('まだ学習計画がありません。'));
+                  return const Center(child: Text(AppStrings.noStudyPlans));
                 }
                 final plans = snapshot.data!;
                 return ListView.builder(

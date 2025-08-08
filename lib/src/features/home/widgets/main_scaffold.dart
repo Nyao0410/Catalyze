@@ -1,3 +1,4 @@
+import 'package:catalyze/src/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:catalyze/src/features/analysis/screens/analysis_screen.dart';
 import 'package:catalyze/src/features/home/screens/home_screen.dart'; // 修正
@@ -35,15 +36,15 @@ class _MainScaffoldState extends State<MainScaffold> {
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: 'ホーム',
+            label: AppStrings.home,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart),
-            label: '分析',
+            label: AppStrings.analysis,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
-            label: '設定',
+            label: AppStrings.settings,
           ),
         ],
         currentIndex: _selectedIndex,

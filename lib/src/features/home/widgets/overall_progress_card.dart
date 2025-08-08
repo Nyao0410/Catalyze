@@ -1,3 +1,4 @@
+import 'package:catalyze/src/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:catalyze/src/constants/app_sizes.dart';
 import 'package:catalyze/src/features/plan/services/plan_service.dart';
@@ -28,7 +29,7 @@ class OverallProgressCard extends StatelessWidget {
               return const SizedBox(height: 50, child: LoadingIndicator());
             }
             if (snapshot.hasError || !snapshot.hasData) {
-              return const Text('今日の進捗データの読み込みに失敗しました。');
+              return const Text(AppStrings.overallProgressError);
             }
 
             final totalDailyQuotaAmount = snapshot.data!['totalDailyQuotaAmount']!;
@@ -38,7 +39,7 @@ class OverallProgressCard extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('今日のノルマ達成度', style: textTheme.titleMedium),
+                Text(AppStrings.overallProgressTitle, style: textTheme.titleMedium),
                 const SizedBox(height: p8),
                 Row(
                   children: [
