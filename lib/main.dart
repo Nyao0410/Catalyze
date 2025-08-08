@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:catalyze/auth_gate.dart';
-import 'package:catalyze/constants/app_theme.dart'; // 新しいテーマをインポート
+import 'package:catalyze/src/features/auth/widgets/auth_gate.dart';
+import 'package:catalyze/src/constants/app_theme.dart'; // 新しいテーマをインポート
 import 'firebase_options.dart';
 
 Future<void> main() async {
