@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:study_ai_assistant/screens/analysis_screen.dart';
-import 'package:study_ai_assistant/screens/home_screen.dart';
+import 'package:study_ai_assistant/screens/home/home_screen.dart'; // 修正
 import 'package:study_ai_assistant/screens/settings_screen.dart';
 
 class MainScaffold extends StatefulWidget {
@@ -14,7 +14,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   int _selectedIndex = 0;
 
   static const List<Widget> _widgetOptions = <Widget>[
-    HomeScreen(),
+    HomeScreen(), // 修正
     AnalysisScreen(),
     SettingsScreen(),
   ];
