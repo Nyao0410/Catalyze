@@ -65,4 +65,32 @@ class StudyPlan {
       // --- ここまで追加 ---
     };
   }
+
+  StudyPlan copyWith({
+    String? id,
+    String? title,
+    int? totalAmount,
+    int? completedAmount,
+    String? unit,
+    Timestamp? createdAt,
+    Timestamp? deadline,
+    int? priority,
+    bool? isActive,
+    String? description,
+    int? predictedPt,
+  }) {
+    return StudyPlan(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      totalAmount: totalAmount ?? this.totalAmount,
+      completedAmount: completedAmount ?? this.completedAmount,
+      unit: unit ?? this.unit,
+      createdAt: createdAt ?? this.createdAt,
+      deadline: deadline ?? this.deadline,
+      priority: priority ?? this.priority,
+      isActive: isActive ?? this.isActive,
+      description: description ?? this.description,
+      predictedPt: predictedPt ?? this.predictedPt,
+    );
+  }
 }

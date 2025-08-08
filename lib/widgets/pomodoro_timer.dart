@@ -1,18 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:study_ai_assistant/constants/app_sizes.dart';
-import 'package:study_ai_assistant/models/learning_record.dart';
 import 'package:study_ai_assistant/models/study_plan.dart';
-import 'package:study_ai_assistant/services/plan_service.dart';
-import 'package:uuid/uuid.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Timestampのために追加
 
 enum PomodoroState { initial, running, paused, breakTime }
 
 class PomodoroTimer extends StatefulWidget {
   final StudyPlan plan;
   final bool autostart;
-  final VoidCallback? onTimerEnd;
+  final Function(int ptCount, Duration duration)? onTimerEnd;
 
   const PomodoroTimer({super.key, required this.plan, this.autostart = false, this.onTimerEnd});
 
@@ -21,13 +17,21 @@ class PomodoroTimer extends StatefulWidget {
 }
 
 class _PomodoroTimerState extends State<PomodoroTimer> {
-  static const int _workDuration = 5; // For testing: 5 seconds
-  static const int _breakDuration = 3; // For testing: 3 seconds
+  static const int _workDuration = 25 * 60; // 25 minutes
+  static const int _breakDuration = 5 * 60; // 5 minutes
 
-  final PlanService _planService = PlanService();
   Timer? _timer;
   int _remainingSeconds = _workDuration;
   PomodoroState _currentState = PomodoroState.initial;
+  int _ptCount = 0; // ポモドーロ完了回数を追跡
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autostart) {
+      _startTimer();
+    }
+  }
 
   void _startTimer() {
     setState(() => _currentState = PomodoroState.running);
@@ -38,7 +42,8 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
       else {
         _timer?.cancel();
         if (_currentState == PomodoroState.running) {
-          _showRecordDialog();
+          _ptCount++;
+          widget.onTimerEnd?.call(_ptCount, const Duration(minutes: 25)); // 25分固定で渡す
           setState(() {
             _currentState = PomodoroState.breakTime;
             _remainingSeconds = _breakDuration;
@@ -49,6 +54,7 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
           setState(() {
             _currentState = PomodoroState.initial;
             _remainingSeconds = _workDuration;
+            _ptCount = 0; // リセット時にPTカウントもリセット
           });
         }
       }
@@ -65,88 +71,8 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
     setState(() {
       _currentState = PomodoroState.initial;
       _remainingSeconds = _workDuration;
+      _ptCount = 0; // リセット時にPTカウントもリセット
     });
-  }
-
-  Future<void> _showRecordDialog() async {
-    double amount = 1; // pagesCompleted -> amount
-    int difficulty = 3;
-    int concentration = 2;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setStateInDialog) {
-            return AlertDialog(
-              title: const Text('学習セッション完了！'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('今回進んだ${widget.plan.unit}数: ${amount.round()}'), // pagesCompleted -> amount
-                    Slider(
-                      value: amount,
-                      min: 0,
-                      max: 100, // TODO: 動的に設定
-                      divisions: 100,
-                      label: amount.round().toString(),
-                      onChanged: (value) => setStateInDialog(() => amount = value),
-                    ),
-                    gapH16,
-                    const Text('難易度'),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(5, (index) => IconButton(
-                        onPressed: () => setStateInDialog(() => difficulty = index + 1),
-                        icon: Icon(index < difficulty ? Icons.star : Icons.star_border, color: Colors.amber),
-                      )),
-                    ),
-                    gapH16,
-                    const Text('集中度'),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: List.generate(3, (index) {
-                        final isSelected = concentration == index + 1;
-                        final emojis = ['☹️', '😐', '😁']; // 絵文字を修正
-                        return GestureDetector(
-                          onTap: () => setStateInDialog(() => concentration = index + 1),
-                          child: Opacity(
-                            opacity: isSelected ? 1.0 : 0.5,
-                            child: Text(emojis[index], style: const TextStyle(fontSize: 32)),
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    final record = LearningRecord(
-                      id: const Uuid().v4(),
-                      planId: widget.plan.id, // 追加
-                      amount: amount.round(), // pagesCompleted -> amount
-                      durationInMinutes: (_workDuration / 60).round(), // durationInSeconds -> durationInMinutes
-                      date: Timestamp.now(), // recordDate -> date
-                      difficulty: difficulty,
-                      concentration: concentration,
-                      ptCount: 1, // actualPt -> ptCount
-                    );
-                    _planService.addLearningRecord(record); // 修正
-                    Navigator.pop(context);
-                  },
-                  child: const Text('記録する'),
-                )
-              ],
-            );
-          },
-        );
-      },
-    );
   }
 
   @override

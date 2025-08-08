@@ -57,21 +57,21 @@ class PlanCard extends StatelessWidget {
       stream: _planService.getLearningRecords(plan.id), // 修正
       builder: (context, snapshot) {
         final records = snapshot.data ?? [];
-        final pagesCompleted = records.fold<int>(0, (sum, record) => sum + record.amount); // 修正
-        final progress = plan.totalAmount > 0 ? pagesCompleted / plan.totalAmount : 0.0; // 修正
-        final remainingPages = plan.totalAmount - pagesCompleted; // 修正
+        final double pagesCompleted = records.fold<double>(0.0, (sum, record) => sum + record.amount);
+        final progress = plan.totalAmount > 0 ? pagesCompleted / plan.totalAmount : 0.0;
+        final double remainingPages = plan.totalAmount - pagesCompleted;
 
         final now = DateTime.now();
-        final totalDuration = plan.deadline?.toDate().difference(plan.createdAt.toDate()).inDays ?? 0; // 修正
+        final totalDuration = plan.deadline?.toDate().difference(plan.createdAt.toDate()).inDays ?? 0;
         final bufferDays = (totalDuration * 0.2).floor();
-        final effectiveTargetDate = plan.deadline?.toDate().subtract(Duration(days: bufferDays)) ?? now; // 修正
+        final effectiveTargetDate = plan.deadline?.toDate().subtract(Duration(days: bufferDays)) ?? now;
         final remainingDays = effectiveTargetDate.difference(now).inDays;
         
         String dailyQuotaText;
         if (remainingPages <= 0) {
           dailyQuotaText = '完了！';
         } else if (remainingDays <= 0) {
-          dailyQuotaText = '本日中に${remainingPages.toStringAsFixed(0)}${plan.unit}';
+          dailyQuotaText = '本日中に${remainingPages.toStringAsFixed(1)}${plan.unit}';
         } else {
           final dailyQuota = remainingPages / remainingDays;
           dailyQuotaText = '1日あたり約${dailyQuota.toStringAsFixed(1)}${plan.unit}';
