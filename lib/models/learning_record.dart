@@ -2,44 +2,55 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LearningRecord {
   final String id;
-  final DateTime recordDate;
-  final int durationInSeconds;
-  final int pagesCompleted;
-  final int difficulty;
+  final String planId;
+  final int amount;
+  final int durationInMinutes;
+  final Timestamp date;
   final int concentration;
-  final int actualPt; // 実績PT
+  final int difficulty;
+  // --- ここから追加 ---
+  final int ptCount; // PT数
+  // --- ここまで追加 ---
 
   LearningRecord({
     required this.id,
-    required this.recordDate,
-    required this.durationInSeconds,
-    required this.pagesCompleted,
-    required this.difficulty,
+    required this.planId,
+    required this.amount,
+    required this.durationInMinutes,
+    required this.date,
     required this.concentration,
-    required this.actualPt,
+    required this.difficulty,
+    // --- ここから追加 ---
+    required this.ptCount,
+    // --- ここまで追加 ---
   });
 
-  factory LearningRecord.fromMap(Map<String, dynamic> map) {
+  factory LearningRecord.fromMap(Map<String, dynamic> map, String id) {
     return LearningRecord(
-      id: map['id'] as String,
-      recordDate: (map['recordDate'] as Timestamp).toDate(),
-      durationInSeconds: map['durationInSeconds'] as int,
-      pagesCompleted: map['pagesCompleted'] as int,
-      difficulty: map['difficulty'] as int,
-      concentration: map['concentration'] as int,
-      actualPt: map['actualPt'] as int? ?? 0, // 互換性のためのnullチェック
+      id: id,
+      planId: map['planId'] ?? '',
+      amount: map['amount'] ?? 0,
+      durationInMinutes: map['durationInMinutes'] ?? 0,
+      date: map['date'] ?? Timestamp.now(),
+      concentration: map['concentration'] ?? 3,
+      difficulty: map['difficulty'] ?? 3,
+      // --- ここから追加 ---
+      ptCount: map['ptCount'] ?? 0,
+      // --- ここまで追加 ---
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
-      'recordDate': Timestamp.fromDate(recordDate),
-      'durationInSeconds': durationInSeconds,
-      'pagesCompleted': pagesCompleted,
-      'difficulty': difficulty,
+      'planId': planId,
+      'amount': amount,
+      'durationInMinutes': durationInMinutes,
+      'date': date,
       'concentration': concentration,
-      'actualPt': actualPt,
+      'difficulty': difficulty,
+      // --- ここから追加 ---
+      'ptCount': ptCount,
+      // --- ここまで追加 ---
     };
   }
 }

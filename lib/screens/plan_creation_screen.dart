@@ -5,6 +5,7 @@ import 'package:study_ai_assistant/services/plan_service.dart';
 import 'package:study_ai_assistant/widgets/common/primary_button.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Timestampのために追加
 
 class PlanCreationScreen extends StatefulWidget {
   // 編集用に既存の計画を受け取れるようにする
@@ -22,12 +23,13 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
 
   // --- Form State ---
   late String _title;
-  late int _totalPages;
+  late int _totalAmount;
   late String _unit;
   late int _predictedPt;
-  late DateTime _targetDate;
+  late DateTime _deadline;
   late String _description;
-  late int _initialDifficulty;
+  late int _priority;
+  late bool _isActive;
   // ------------------
 
   @override
@@ -36,24 +38,25 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
     _isEditing = widget.plan != null;
     // 編集モードの場合は、既存のデータで初期化
     _title = widget.plan?.title ?? '';
-    _totalPages = widget.plan?.totalPages ?? 0;
+    _totalAmount = widget.plan?.totalAmount ?? 0;
     _unit = widget.plan?.unit ?? 'ページ';
     _predictedPt = widget.plan?.predictedPt ?? 0;
-    _targetDate = widget.plan?.targetDate ?? DateTime.now().add(const Duration(days: 30));
+    _deadline = widget.plan?.deadline?.toDate() ?? DateTime.now().add(const Duration(days: 30));
     _description = widget.plan?.description ?? '';
-    _initialDifficulty = widget.plan?.initialDifficulty ?? 3;
+    _priority = widget.plan?.priority ?? 2;
+    _isActive = widget.plan?.isActive ?? true;
   }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _targetDate,
+      initialDate: _deadline,
       firstDate: DateTime.now(),
       lastDate: DateTime(2101),
     );
-    if (picked != null && picked != _targetDate) {
+    if (picked != null && picked != _deadline) {
       setState(() {
-        _targetDate = picked;
+        _deadline = picked;
       });
     }
   }
@@ -64,19 +67,18 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
       final planData = StudyPlan(
         id: widget.plan?.id ?? const Uuid().v4(),
         title: _title,
-        totalPages: _totalPages,
-        targetDate: _targetDate,
-        creationDate: widget.plan?.creationDate ?? DateTime.now(),
+        totalAmount: _totalAmount,
+        createdAt: widget.plan?.createdAt ?? Timestamp.now(),
         unit: _unit,
-        description: _description,
-        tags: widget.plan?.tags ?? [],
-        initialDifficulty: _initialDifficulty,
-        predictedPt: _predictedPt,
+        deadline: Timestamp.fromDate(_deadline),
+        priority: _priority,
+        isActive: _isActive,
+        completedAmount: widget.plan?.completedAmount ?? 0, // 編集時は既存の値を保持
       );
 
       final future = _isEditing
-          ? _planService.updateStudyPlan(planData)
-          : _planService.addStudyPlan(planData);
+          ? _planService.updatePlan(planData)
+          : _planService.addPlan(planData);
 
       future.then((_) {
         if (mounted) Navigator.of(context).pop();
@@ -110,11 +112,11 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
               children: [
                 Expanded(
                   child: TextFormField(
-                    initialValue: _totalPages.toString(),
+                    initialValue: _totalAmount.toString(),
                     decoration: const InputDecoration(labelText: '総量'),
                     keyboardType: TextInputType.number,
                     validator: (value) => value!.isEmpty ? '入力' : null,
-                    onSaved: (value) => _totalPages = int.parse(value!),
+                    onSaved: (value) => _totalAmount = int.parse(value!),
                   ),
                 ),
                 gapW16,
@@ -138,15 +140,15 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
             gapH24,
             const Text('初期難易度', style: TextStyle(fontSize: 16)),
             _StarRating(
-              rating: _initialDifficulty,
-              onRatingChanged: (rating) => setState(() => _initialDifficulty = rating),
+              rating: _priority, // priorityを難易度として使用
+              onRatingChanged: (rating) => setState(() => _priority = rating),
             ),
             gapH24,
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    '目標日: ${DateFormat('yyyy/MM/dd').format(_targetDate)}',
+                    '目標日: ${DateFormat('yyyy/MM/dd').format(_deadline)}',
                   ),
                 ),
                 TextButton(
@@ -164,6 +166,7 @@ class _PlanCreationScreenState extends State<PlanCreationScreen> {
   }
 }
 
+// 星評価のためのカスタムウィジェット
 class _StarRating extends StatelessWidget {
   final int rating;
   final Function(int) onRatingChanged;

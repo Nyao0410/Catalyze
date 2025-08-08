@@ -14,7 +14,7 @@ class PlanListPreview extends StatelessWidget {
     final planService = PlanService();
 
     return StreamBuilder<List<StudyPlan>>(
-      stream: planService.getStudyPlans(), // plan_serviceから学習計画のStreamを取得
+      stream: planService.getPlans(), // 修正
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const LoadingIndicator();

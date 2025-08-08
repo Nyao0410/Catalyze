@@ -31,7 +31,7 @@ class PlanCard extends StatelessWidget {
         return AlertDialog(
           title: const Text('計画の削除'),
           content: Text('「${plan.title}」を本当に削除しますか？この操作は元に戻せません。'),
-          actions: <Widget>[
+          actions: <Widget>[ 
             TextButton(
               child: const Text('キャンセル'),
               onPressed: () {
@@ -41,7 +41,7 @@ class PlanCard extends StatelessWidget {
             TextButton(
               child: const Text('削除', style: TextStyle(color: Colors.redAccent)),
               onPressed: () {
-                _planService.deleteStudyPlan(plan.id);
+                _planService.deletePlan(plan.id); // 修正
                 Navigator.of(context).pop();
               },
             ),
@@ -54,17 +54,17 @@ class PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<LearningRecord>>(
-      stream: _planService.getLearningRecords(plan.id),
+      stream: _planService.getLearningRecords(plan.id), // 修正
       builder: (context, snapshot) {
         final records = snapshot.data ?? [];
-        final pagesCompleted = records.fold<int>(0, (sum, record) => sum + record.pagesCompleted);
-        final progress = plan.totalPages > 0 ? pagesCompleted / plan.totalPages : 0.0;
-        final remainingPages = plan.totalPages - pagesCompleted;
+        final pagesCompleted = records.fold<int>(0, (sum, record) => sum + record.amount); // 修正
+        final progress = plan.totalAmount > 0 ? pagesCompleted / plan.totalAmount : 0.0; // 修正
+        final remainingPages = plan.totalAmount - pagesCompleted; // 修正
 
         final now = DateTime.now();
-        final totalDuration = plan.targetDate.difference(plan.creationDate).inDays;
+        final totalDuration = plan.deadline?.toDate().difference(plan.createdAt.toDate()).inDays ?? 0; // 修正
         final bufferDays = (totalDuration * 0.2).floor();
-        final effectiveTargetDate = plan.targetDate.subtract(Duration(days: bufferDays));
+        final effectiveTargetDate = plan.deadline?.toDate().subtract(Duration(days: bufferDays)) ?? now; // 修正
         final remainingDays = effectiveTargetDate.difference(now).inDays;
         
         String dailyQuotaText;
@@ -136,7 +136,7 @@ class PlanCard extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerRight,
                     child: Text(
-                      '目標日まであと${plan.targetDate.difference(DateTime.now()).inDays}日',
+                      '目標日まであと${plan.deadline?.toDate().difference(DateTime.now()).inDays ?? 0}日', // 修正
                       style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color?.withAlpha(153)), // withOpacity(0.6) -> withAlpha(0.6 * 255) = 153
                     ),
                   ),

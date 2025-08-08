@@ -5,12 +5,16 @@ import 'package:study_ai_assistant/models/learning_record.dart';
 import 'package:study_ai_assistant/models/study_plan.dart';
 import 'package:study_ai_assistant/services/plan_service.dart';
 import 'package:uuid/uuid.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Timestampのために追加
 
 enum PomodoroState { initial, running, paused, breakTime }
 
 class PomodoroTimer extends StatefulWidget {
   final StudyPlan plan;
-  const PomodoroTimer({super.key, required this.plan});
+  final bool autostart;
+  final VoidCallback? onTimerEnd;
+
+  const PomodoroTimer({super.key, required this.plan, this.autostart = false, this.onTimerEnd});
 
   @override
   State<PomodoroTimer> createState() => _PomodoroTimerState();
@@ -65,7 +69,7 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
   }
 
   Future<void> _showRecordDialog() async {
-    double pagesCompleted = 1;
+    double amount = 1; // pagesCompleted -> amount
     int difficulty = 3;
     int concentration = 2;
 
@@ -82,14 +86,14 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('今回進んだ${widget.plan.unit}数: ${pagesCompleted.round()}'),
+                    Text('今回進んだ${widget.plan.unit}数: ${amount.round()}'), // pagesCompleted -> amount
                     Slider(
-                      value: pagesCompleted,
+                      value: amount,
                       min: 0,
                       max: 100, // TODO: 動的に設定
                       divisions: 100,
-                      label: pagesCompleted.round().toString(),
-                      onChanged: (value) => setStateInDialog(() => pagesCompleted = value),
+                      label: amount.round().toString(),
+                      onChanged: (value) => setStateInDialog(() => amount = value),
                     ),
                     gapH16,
                     const Text('難易度'),
@@ -124,14 +128,15 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
                   onPressed: () {
                     final record = LearningRecord(
                       id: const Uuid().v4(),
-                      recordDate: DateTime.now(),
-                      durationInSeconds: _workDuration,
-                      pagesCompleted: pagesCompleted.round(),
+                      planId: widget.plan.id, // 追加
+                      amount: amount.round(), // pagesCompleted -> amount
+                      durationInMinutes: (_workDuration / 60).round(), // durationInSeconds -> durationInMinutes
+                      date: Timestamp.now(), // recordDate -> date
                       difficulty: difficulty,
                       concentration: concentration,
-                      actualPt: 1,
+                      ptCount: 1, // actualPt -> ptCount
                     );
-                    _planService.addLearningRecord(widget.plan.id, record);
+                    _planService.addLearningRecord(record); // 修正
                     Navigator.pop(context);
                   },
                   child: const Text('記録する'),

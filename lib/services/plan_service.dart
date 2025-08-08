@@ -1,84 +1,138 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:study_ai_assistant/models/study_plan.dart';
 import 'package:study_ai_assistant/models/learning_record.dart';
+import 'package:study_ai_assistant/models/study_plan.dart';
 
 class PlanService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final _auth = FirebaseAuth.instance;
+  final _firestore = FirebaseFirestore.instance;
 
-  // ログインしているユーザーのIDを取得するヘルパー
-  String? get _userId => _auth.currentUser?.uid;
+  User? get _currentUser => _auth.currentUser;
 
-  // ユーザー専用の'study_plans'コレクションへの参照を返す
-  CollectionReference<StudyPlan> _getStudyPlansRef() {
-    final userId = _userId;
-    if (userId == null) {
-      throw Exception("User not logged in");
+  CollectionReference<StudyPlan> get _plansRef => _firestore
+      .collection('users')
+      .doc(_currentUser!.uid)
+      .collection('plans')
+      .withConverter<StudyPlan>(
+        fromFirestore: (snapshot, _) => StudyPlan.fromMap(snapshot.data()!, snapshot.id),
+        toFirestore: (plan, _) => plan.toMap(),
+      );
+  
+  CollectionReference<LearningRecord> get _recordsRef => _firestore
+      .collection('users')
+      .doc(_currentUser!.uid)
+      .collection('learning_records')
+      .withConverter<LearningRecord>(
+        fromFirestore: (snapshot, _) => LearningRecord.fromMap(snapshot.data()!, snapshot.id),
+        toFirestore: (record, _) => record.toMap(),
+      );
+
+  Stream<List<StudyPlan>> getPlans() {
+    if (_currentUser == null) return Stream.value([]);
+    return _plansRef
+        .where('isActive', isEqualTo: true)
+        .orderBy('priority')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+  }
+
+  Future<void> addPlan(StudyPlan plan) async {
+    if (_currentUser == null) return;
+    await _plansRef.add(plan);
+  }
+
+  /// 新しい学習記録を追加する
+  Future<void> addLearningRecord(LearningRecord record) async {
+    if (_currentUser == null) return;
+    await _recordsRef.add(record);
+  }
+
+  /// 全体の進捗度を計算して返す (0.0 ~ 1.0)
+  Future<double> getOverallProgress() async {
+    if (_currentUser == null) return 0.0;
+    
+    final querySnapshot = await _plansRef.where('isActive', isEqualTo: true).get();
+    if (querySnapshot.docs.isEmpty) return 0.0;
+
+    int totalAmountSum = 0;
+    int completedAmountSum = 0;
+
+    for (var doc in querySnapshot.docs) {
+      final plan = doc.data();
+      totalAmountSum += plan.totalAmount;
+      completedAmountSum += plan.completedAmount;
     }
-    return _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('study_plans')
-        .withConverter<StudyPlan>(
-          fromFirestore: (snapshot, _) => StudyPlan.fromMap(snapshot.data()!),
-          toFirestore: (plan, _) => plan.toMap(),
-        );
+    
+    if (totalAmountSum == 0) return 0.0;
+
+    return completedAmountSum / totalAmountSum;
   }
 
-  // ユーザー専用の学習計画をストリームとして取得
-  Stream<List<StudyPlan>> getStudyPlans() {
-    if (_userId == null) return Stream.value([]); // 未ログイン時は空のリストを返す
-    return _getStudyPlansRef().orderBy('creationDate', descending: true).snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) => doc.data()).toList();
-    });
+  /// 週間学習データを取得する
+  Future<List<LearningRecord>> getWeeklyLearningRecords() async {
+     if (_currentUser == null) return [];
+
+    final now = DateTime.now();
+    final oneWeekAgo = now.subtract(const Duration(days: 7));
+    
+    final querySnapshot = await _recordsRef
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(oneWeekAgo))
+        .orderBy('date', descending: true)
+        .get();
+        
+    return querySnapshot.docs.map((doc) => doc.data()).toList();
   }
+  
+  /// 参考書ごとの学習バランスデータを取得する
+  Future<Map<String, Duration>> getBookBalanceData() async {
+    if (_currentUser == null) return {};
 
-  // 学習計画の追加
-  Future<void> addStudyPlan(StudyPlan plan) {
-    return _getStudyPlansRef().doc(plan.id).set(plan);
-  }
+    final recordsSnapshot = await _recordsRef.get();
+    if (recordsSnapshot.docs.isEmpty) return {};
 
-  // 学習計画の更新
-  Future<void> updateStudyPlan(StudyPlan plan) {
-    return _getStudyPlansRef().doc(plan.id).update(plan.toMap());
-  }
-
-  // 学習計画の削除
-  Future<void> deleteStudyPlan(String planId) {
-    return _getStudyPlansRef().doc(planId).delete();
-  }
-
-  // --- 学習記録（LearningRecord）用のメソッド ---
-
-  // ユーザー専用の'learning_records'サブコレクションへの参照
-  CollectionReference<LearningRecord> _getLearningRecordsRef(String planId) {
-     final userId = _userId;
-    if (userId == null) {
-      throw Exception("User not logged in");
+    final planIdToTitle = <String, String>{};
+    final plansSnapshot = await _plansRef.get();
+    for (var doc in plansSnapshot.docs) {
+      planIdToTitle[doc.id] = doc.data().title;
     }
-    return _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('study_plans')
-        .doc(planId)
-        .collection('learning_records')
-        .withConverter<LearningRecord>(
-            fromFirestore: (snapshot, _) => LearningRecord.fromMap(snapshot.data()!),
-            toFirestore: (record, _) => record.toMap(),
-          );
+
+    final balance = <String, int>{}; // title, totalMinutes
+    for (var doc in recordsSnapshot.docs) {
+      final record = doc.data();
+      final title = planIdToTitle[record.planId] ?? '不明な計画';
+      balance.update(
+        title,
+        (value) => value + record.durationInMinutes,
+        ifAbsent: () => record.durationInMinutes,
+      );
+    }
+    
+    return balance.map((key, value) => MapEntry(key, Duration(minutes: value)));
   }
 
-  // 学習記録をストリームとして取得
+  Future<void> updatePlan(StudyPlan plan) async {
+    if (_currentUser == null) return;
+    try {
+      await _plansRef.doc(plan.id).update(plan.toMap());
+    } catch (e) {
+      // TODO: より適切なエラーハンドリングを実装する
+      // print('Error updating plan: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deletePlan(String planId) async {
+    if (_currentUser == null) return;
+    await _plansRef.doc(planId).delete();
+  }
+
   Stream<List<LearningRecord>> getLearningRecords(String planId) {
-    if (_userId == null) return Stream.value([]);
-    return _getLearningRecordsRef(planId).orderBy('recordDate', descending: true).snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) => doc.data()).toList();
-    });
-  }
-
-  // 学習記録の追加
-  Future<void> addLearningRecord(String planId, LearningRecord record) {
-    return _getLearningRecordsRef(planId).doc(record.id).set(record);
+    if (_currentUser == null) return Stream.value([]);
+    return _recordsRef
+        .where('planId', isEqualTo: planId)
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 }

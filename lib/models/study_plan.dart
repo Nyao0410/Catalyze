@@ -3,57 +3,66 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class StudyPlan {
   final String id;
   final String title;
-  final int totalPages;
-  final DateTime targetDate;
-  final DateTime creationDate;
+  final int totalAmount;
+  final int completedAmount;
   final String unit;
-  // --- 追加フィールド ---
-  final String description;
-  final List<String> tags;
-  final int initialDifficulty;
-  // --------------------
-  final int predictedPt;
+  final Timestamp createdAt;
+  // --- ここから追加 ---
+  final Timestamp? deadline; // 目標達成日
+  final int priority; // 優先度 (1:高, 2:中, 3:低)
+  final bool isActive; // アーカイブフラグ
+  final String description; // 説明
+  final int predictedPt; // 予測PT
+  // --- ここまで追加 ---
 
   StudyPlan({
     required this.id,
     required this.title,
-    required this.totalPages,
-    required this.targetDate,
-    required this.creationDate,
+    required this.totalAmount,
+    this.completedAmount = 0,
     required this.unit,
-    required this.description,
-    required this.tags,
-    required this.initialDifficulty,
-    required this.predictedPt,
+    required this.createdAt,
+    // --- ここから追加 ---
+    this.deadline,
+    this.priority = 2, // デフォルトは中優先度
+    this.isActive = true, // デフォルトはアクティブ
+    this.description = '', // デフォルトは空文字列
+    this.predictedPt = 0, // デフォルトは0
+    // --- ここまで追加 ---
   });
 
-  factory StudyPlan.fromMap(Map<String, dynamic> map) {
+  factory StudyPlan.fromMap(Map<String, dynamic> map, String id) {
     return StudyPlan(
-      id: map['id'] as String,
-      title: map['title'] as String,
-      totalPages: map['totalPages'] as int,
-      targetDate: (map['targetDate'] as Timestamp).toDate(),
-      creationDate: (map['creationDate'] as Timestamp).toDate(),
-      unit: map['unit'] as String,
-      description: map['description'] as String? ?? '',
-      tags: List<String>.from(map['tags'] as List<dynamic>? ?? []),
-      initialDifficulty: map['initialDifficulty'] as int? ?? 3,
-      predictedPt: map['predictedPt'] as int? ?? 0,
+      id: id,
+      title: map['title'] ?? '',
+      totalAmount: map['totalAmount'] ?? 0,
+      completedAmount: map['completedAmount'] ?? 0,
+      unit: map['unit'] ?? '',
+      createdAt: map['createdAt'] ?? Timestamp.now(),
+      // --- ここから追加 ---
+      deadline: map['deadline'], // null許容
+      priority: map['priority'] ?? 2,
+      isActive: map['isActive'] ?? true,
+      description: map['description'] ?? '',
+      predictedPt: map['predictedPt'] ?? 0,
+      // --- ここまで追加 ---
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'title': title,
-      'totalPages': totalPages,
-      'targetDate': Timestamp.fromDate(targetDate),
-      'creationDate': Timestamp.fromDate(creationDate),
+      'totalAmount': totalAmount,
+      'completedAmount': completedAmount,
       'unit': unit,
+      'createdAt': createdAt,
+      // --- ここから追加 ---
+      'deadline': deadline,
+      'priority': priority,
+      'isActive': isActive,
       'description': description,
-      'tags': tags,
-      'initialDifficulty': initialDifficulty,
       'predictedPt': predictedPt,
+      // --- ここまで追加 ---
     };
   }
 }
