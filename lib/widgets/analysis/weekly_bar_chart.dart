@@ -10,10 +10,12 @@ class WeeklyBarChart extends StatelessWidget {
     super.key,
     required this.barChartType,
     required this.records,
+    required this.planTitles,
   });
 
   final BarChartType barChartType;
   final List<LearningRecord> records;
+  final Map<String, String> planTitles;
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +23,16 @@ class WeeklyBarChart extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isAmount = barChartType == BarChartType.amount;
     final weeklyData = _processRecords(isAmount);
+
+    // 各プランIDに色を割り当てる
+    final uniquePlanIds = records.map((e) => e.planId).toSet().toList();
+    final List<Color> colors = [
+      Colors.blue, Colors.green, Colors.red, Colors.purple, Colors.orange, Colors.teal, Colors.brown
+    ];
+    final Map<String, Color> planColors = {};
+    for (int i = 0; i < uniquePlanIds.length; i++) {
+      planColors[uniquePlanIds[i]] = colors[i % colors.length];
+    }
 
     return AspectRatio(
       aspectRatio: 1.7,
@@ -50,7 +62,7 @@ class WeeklyBarChart extends StatelessWidget {
                   }
                   return SideTitleWidget(axisSide: meta.axisSide, child: Text(text, style: style));
                 },
-                reservedSize: p24, // AppSizes.p24 -> p24
+                reservedSize: p24,
               ),
             ),
           ),
@@ -58,23 +70,37 @@ class WeeklyBarChart extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             getDrawingHorizontalLine: (value) => FlLine(
-              color: colorScheme.onSurface.withAlpha(25), // withOpacity(0.1) -> withAlpha(0.1 * 255) = 25.5
+              color: colorScheme.onSurface.withAlpha(25),
               strokeWidth: 1,
             ),
           ),
           borderData: FlBorderData(show: false),
           barGroups: List.generate(7, (i) {
+            final dayData = weeklyData[i] ?? {};
+            final List<BarChartRodStackItem> stackItems = [];
+            double currentStackY = 0;
+
+            dayData.forEach((planId, value) {
+              stackItems.add(BarChartRodStackItem(
+                currentStackY,
+                currentStackY + value,
+                planColors[planId] ?? Colors.grey,
+              ));
+              currentStackY += value;
+            });
+
             return BarChartGroupData(
               x: i,
               barRods: [
                 BarChartRodData(
-                  toY: weeklyData[i],
-                  color: colorScheme.primary,
-                  width: p16, // AppSizes.p16 -> p16
+                  toY: currentStackY,
+                  color: Colors.transparent,
+                  width: p16,
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(p4), // AppSizes.p4 -> p4
-                    topRight: Radius.circular(p4), // AppSizes.p4 -> p4
+                    topLeft: Radius.circular(p4),
+                    topRight: Radius.circular(p4),
                   ),
+                  rodStackItems: stackItems,
                 ),
               ],
             );
@@ -85,15 +111,18 @@ class WeeklyBarChart extends StatelessWidget {
   }
 
   // 学習記録を曜日のデータに加工する
-  List<double> _processRecords(bool isAmount) {
-    List<double> data = List.filled(7, 0.0); // 月曜〜日曜
+  Map<int, Map<String, double>> _processRecords(bool isAmount) {
+    final Map<int, Map<String, double>> data = {};
 
     for (final record in records) {
-      final dayIndex = record.date.toDate().weekday - 1; // 月曜=0, ...
+      final dayIndex = record.date.toDate().weekday - 1;
+      data.putIfAbsent(dayIndex, () => {});
+      
+      final planId = record.planId;
       if (isAmount) {
-        data[dayIndex] += record.amount;
+        data[dayIndex]![planId] = (data[dayIndex]![planId] ?? 0.0) + record.amount;
       } else {
-        data[dayIndex] += record.durationInMinutes;
+        data[dayIndex]![planId] = (data[dayIndex]![planId] ?? 0.0) + record.durationInMinutes;
       }
     }
     return data;

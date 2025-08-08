@@ -165,6 +165,15 @@ class PlanService {
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 
+  /// すべての学習記録を取得する
+  Future<List<LearningRecord>> getAllLearningRecords() async {
+    if (_currentUser == null) return [];
+    final querySnapshot = await _recordsRef
+        .orderBy('date', descending: true)
+        .get();
+    return querySnapshot.docs.map((doc) => doc.data()).toList();
+  }
+
   /// 今日の学習目標PT数を取得する
   Future<int> getTodayLearningGoal() async {
     if (_currentUser == null) return 0;

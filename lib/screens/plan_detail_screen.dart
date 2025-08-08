@@ -3,7 +3,6 @@ import 'package:study_ai_assistant/models/study_plan.dart';
 import 'package:study_ai_assistant/widgets/pomodoro_timer.dart';
 import 'package:study_ai_assistant/services/plan_service.dart';
 import 'package:study_ai_assistant/models/learning_record.dart';
-import 'package:intl/intl.dart';
 
 import 'package:study_ai_assistant/screens/evaluation_screen.dart';
 import 'package:study_ai_assistant/widgets/common/primary_button.dart';
@@ -54,35 +53,6 @@ class _PlanDetailScreenState extends State<PlanDetailScreen> {
                         duration: duration,
                       ),
                     ),
-                  );
-                },
-              ),
-              const SizedBox(height: 32),
-              // 学習履歴の表示
-              StreamBuilder<List<LearningRecord>>(
-                stream: _planService.getLearningRecords(widget.plan.id),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
-                  }
-                  if (snapshot.hasError) {
-                    return Text('エラー: ${snapshot.error}');
-                  }
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Text('まだ学習記録がありません。');
-                  }
-                  final records = snapshot.data!;
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: records.length,
-                    itemBuilder: (context, index) {
-                      final record = records[index];
-                      return ListTile(
-                        title: Text('${record.amount} ${widget.plan.unit} (${record.ptCount} PT)'),
-                        subtitle: Text(DateFormat('yyyy/MM/dd HH:mm').format(record.date.toDate())),
-                      );
-                    },
                   );
                 },
               ),
