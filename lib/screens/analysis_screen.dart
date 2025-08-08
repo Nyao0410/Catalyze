@@ -1,36 +1,77 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:study_ai_assistant/models/learning_record.dart';
 import 'package:study_ai_assistant/models/study_plan.dart';
 import 'package:study_ai_assistant/services/plan_service.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'dart:math';
+import 'package:intl/intl.dart';
 
 class AnalysisScreen extends StatefulWidget {
   const AnalysisScreen({super.key});
+
   @override
   State<AnalysisScreen> createState() => _AnalysisScreenState();
 }
 
 class _AnalysisScreenState extends State<AnalysisScreen> {
-  bool _showTimeData = true;
+  final PlanService _planService = PlanService();
+  late Future<Map<String, dynamic>> _analysisDataFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _analysisDataFuture = _fetchAnalysisData();
+  }
+
+  Future<Map<String, dynamic>> _fetchAnalysisData() async {
+    final plans = await _planService.getStudyPlans().first;
+    final Map<String, List<LearningRecord>> allRecords = {};
+    for (final plan in plans) {
+      final records = await _planService.getLearningRecords(plan.id).first;
+      allRecords[plan.id] = records;
+    }
+    return {'plans': plans, 'allRecords': allRecords};
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('分析')),
-      body: ValueListenableBuilder(
-        valueListenable: PlanService.getPlansBox().listenable(),
-        builder: (context, Box<StudyPlan> box, _) {
-          final plans = box.values.toList();
-          if (plans.isEmpty || plans.every((p) => p.records.isEmpty)) {
-            return const Center(child: Text('学習記録がありません', style: TextStyle(fontSize: 18, color: Colors.grey)));
+      appBar: AppBar(
+        title: const Text('学習分析'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {
+                _analysisDataFuture = _fetchAnalysisData();
+              });
+            },
+          ),
+        ],
+      ),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _analysisDataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
+          if (snapshot.hasError) {
+            return Center(child: Text('エラーが発生しました: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData || (snapshot.data!['plans'] as List).isEmpty) {
+            return const Center(child: Text('分析対象のデータがありません。'));
+          }
+
+          final List<StudyPlan> plans = snapshot.data!['plans'];
+          final Map<String, List<LearningRecord>> allRecords = snapshot.data!['allRecords'];
+
           return ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
-              _buildBarChartCard(plans),
-              const SizedBox(height: 16),
-              _buildPieChartCard(plans),
+              _buildWeeklyChart(allRecords),
+              const SizedBox(height: 24),
+              _buildBalanceChart(plans, allRecords),
+              const SizedBox(height: 24),
+              _buildGapAnalysis(plans, allRecords),
             ],
           );
         },
@@ -38,151 +79,112 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     );
   }
 
-  Widget _buildBarChartCard(List<StudyPlan> plans) {
-    final weeklyData = _getWeeklyData(plans, _showTimeData);
-    final maxY = (weeklyData.values.isEmpty ? 10.0 : weeklyData.values.reduce(max) * 1.2).ceilToDouble();
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Align(
-              alignment: Alignment.center,
-              child: ToggleButtons(
-                isSelected: [_showTimeData, !_showTimeData],
-                onPressed: (index) => setState(() => _showTimeData = index == 0),
-                borderRadius: BorderRadius.circular(8),
-                children: const [
-                  Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('学習時間')),
-                  Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('学習量')),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 200,
-              child: BarChart(
-                BarChartData(
-                  maxY: maxY,
-                  barGroups: _generateBarGroups(weeklyData),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: _getBottomTitles, reservedSize: 22)),
-                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  ),
-                  gridData: const FlGridData(show: true, drawVerticalLine: false),
-                  borderData: FlBorderData(show: false),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
     );
   }
 
-  Map<int, double> _getWeeklyData(List<StudyPlan> plans, bool isTime) {
-    final Map<int, double> data = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0};
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final startOfWeek = today.subtract(Duration(days: today.weekday - 1));
+  Widget _buildWeeklyChart(Map<String, List<LearningRecord>> allRecords) {
+    final weeklyData = <int, double>{ for (int i = 0; i < 7; i++) i: 0.0 };
+    final today = DateTime.now();
 
-    for (var plan in plans) {
-      for (var record in plan.records) {
-        if (!record.recordDate.isBefore(startOfWeek)) {
-          final day = record.recordDate.weekday;
-          if (isTime) {
-            data[day] = (data[day] ?? 0) + (record.durationInSeconds / 60); // minutes
-          } else {
-            data[day] = (data[day] ?? 0) + record.pagesCompleted;
-          }
-        }
+    allRecords.values.expand((records) => records).forEach((record) {
+      final diff = today.difference(record.recordDate).inDays;
+      if (diff >= 0 && diff < 7) {
+        weeklyData[diff] = (weeklyData[diff] ?? 0.0) + record.actualPt;
       }
-    }
-    return data;
-  }
+    });
 
-  List<BarChartGroupData> _generateBarGroups(Map<int, double> weeklyData) {
-    return List.generate(7, (index) {
-      final day = index + 1;
+    final barGroups = List.generate(7, (index) {
+      final dayIndex = 6 - index;
       return BarChartGroupData(
-        x: day,
-        barRods: [BarChartRodData(toY: weeklyData[day] ?? 0, color: Colors.lightBlueAccent, width: 16, borderRadius: BorderRadius.circular(4))],
+        x: index,
+        barRods: [BarChartRodData(toY: weeklyData[dayIndex] ?? 0.0, color: Colors.lightBlueAccent, width: 16)],
       );
     });
-  }
 
-  Widget _getBottomTitles(double value, TitleMeta meta) {
-    const style = TextStyle(fontSize: 10);
-    String text;
-    switch (value.toInt()) {
-      case 1: text = '月'; break;
-      case 2: text = '火'; break;
-      case 3: text = '水'; break;
-      case 4: text = '木'; break;
-      case 5: text = '金'; break;
-      case 6: text = '土'; break;
-      case 7: text = '日'; break;
-      default: text = ''; break;
-    }
-    return SideTitleWidget(
-      axisSide: meta.axisSide, // This line is the fix.
-      child: Text(text, style: style),
-    );
-  }
-
-  Widget _buildPieChartCard(List<StudyPlan> plans) {
-    final pieData = _getPieData(plans);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text('参考書別 学習時間', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              child: pieData.isEmpty 
-                  ? const Center(child: Text('データがありません'))
-                  : PieChart(
-                      PieChartData(
-                        sections: pieData,
-                        sectionsSpace: 2,
-                        centerSpaceRadius: 40,
-                      ),
-                    ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('週間学習時間 (PT)'),
+        SizedBox(
+          height: 200,
+          child: BarChart(
+            BarChartData(
+              barGroups: barGroups,
+              titlesData: FlTitlesData(
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (value, meta) {
+                      final day = today.subtract(Duration(days: 6 - value.toInt()));
+                      return Text(DateFormat('E', 'ja_JP').format(day));
+                    },
+                  ),
+                ),
+                leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 28)),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              ),
+              borderData: FlBorderData(show: false),
+              gridData: const FlGridData(show: true, drawVerticalLine: false),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
-  List<PieChartSectionData> _getPieData(List<StudyPlan> plans) {
-    final totalDuration = plans.fold<double>(0, (sum, p) => sum + p.records.fold(0, (s, r) => s + r.durationInSeconds));
-    if (totalDuration == 0) return [];
-    
-    final List<Color> colors = [Colors.blue, Colors.green, Colors.orange, Colors.purple, Colors.red, Colors.teal, Colors.pink];
-    int colorIndex = 0;
+  Widget _buildBalanceChart(List<StudyPlan> plans, Map<String, List<LearningRecord>> allRecords) {
+    final Map<String, double> balanceData = {};
+    for (final plan in plans) {
+      final totalPt = allRecords[plan.id]!.fold<double>(0.0, (sum, record) => sum + record.actualPt);
+      if (totalPt > 0) {
+        balanceData[plan.title] = totalPt;
+      }
+    }
+    if (balanceData.isEmpty) return const SizedBox.shrink();
 
-    return plans.where((p) => p.records.isNotEmpty).map((plan) {
-      final planDuration = plan.records.fold<double>(0, (s, r) => s + r.durationInSeconds);
-      final percentage = (planDuration / totalDuration) * 100;
-      final color = colors[colorIndex % colors.length];
-      colorIndex++;
+    final pieChartSections = balanceData.entries.map((entry) {
       return PieChartSectionData(
-        color: color,
-        value: planDuration,
-        title: '${percentage.toStringAsFixed(0)}%',
-        radius: 60,
-        titleStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white, shadows: [Shadow(blurRadius: 2)]),
-        badgeWidget: Text(plan.title, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
-        badgePositionPercentageOffset: 1.2,
+        value: entry.value,
+        title: '${entry.value.toStringAsFixed(0)} PT',
+        color: Colors.primaries[balanceData.keys.toList().indexOf(entry.key) % Colors.primaries.length],
+        radius: 80,
       );
     }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('参考書バランス'),
+        SizedBox(height: 200, child: PieChart(PieChartData(sections: pieChartSections))),
+      ],
+    );
+  }
+  
+  Widget _buildGapAnalysis(List<StudyPlan> plans, Map<String, List<LearningRecord>> allRecords) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('予測PTギャップ分析'),
+        ...plans.map((plan) {
+          final totalActualPt = allRecords[plan.id]!.fold<int>(0, (sum, record) => sum + record.actualPt);
+          final gap = totalActualPt - plan.predictedPt;
+          final gapText = gap > 0 ? '+$gap PT' : '$gap PT';
+          final color = gap > 0 ? Colors.orangeAccent : Colors.lightGreenAccent;
+
+          return Card(
+            child: ListTile(
+              title: Text(plan.title),
+              subtitle: Text('予測: ${plan.predictedPt} PT / 実績: $totalActualPt PT'),
+              trailing: Text(gapText, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16)),
+            ),
+          );
+        }),
+      ],
+    );
   }
 }
