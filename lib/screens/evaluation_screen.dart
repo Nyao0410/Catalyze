@@ -4,6 +4,8 @@ import 'package:catalyze/models/learning_record.dart';
 import 'package:catalyze/models/study_plan.dart';
 import 'package:catalyze/services/plan_service.dart';
 import 'package:uuid/uuid.dart';
+import 'package:catalyze/widgets/common/primary_button.dart'; // 追加
+import 'package:catalyze/widgets/secondary_button.dart'; // 追加
 
 class EvaluationScreen extends StatefulWidget {
   final StudyPlan plan;
@@ -24,15 +26,23 @@ class EvaluationScreen extends StatefulWidget {
 class _EvaluationScreenState extends State<EvaluationScreen> {
   final PlanService _planService = PlanService();
   final TextEditingController _amountController = TextEditingController();
-  double _concentrationLevel = 3.0; // 集中度を保持する変数
-  double _difficultyLevel = 3.0; // 難易度を保持する変数
+  int _concentrationLevel = 3; // 集中度を保持する変数 (intに変更)
+  int _difficultyLevel = 3; // 難易度を保持する変数 (intに変更)
 
   @override
   void initState() {
     super.initState();
     // ポモドーロ完了からの遷移の場合、進捗量を自動入力
     if (widget.ptCount > 0) {
-      _amountController.text = '${widget.plan.totalAmount / widget.plan.predictedPt * widget.ptCount}';
+      // 予測PTが0でない場合のみ計算
+      if (widget.plan.predictedPt > 0) {
+        _amountController.text = (widget.plan.totalAmount / widget.plan.predictedPt * widget.ptCount).toStringAsFixed(1);
+      } else {
+        _amountController.text = '0.0'; // 予測PTが0の場合は0を設定
+      }
+    } else {
+      // 完了ボタンからの遷移の場合、現在の完了量から開始
+      _amountController.text = widget.plan.completedAmount.toString();
     }
   }
 
@@ -59,8 +69,8 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
       unit: widget.plan.unit,
       durationInMinutes: widget.duration.inMinutes,
       ptCount: widget.ptCount,
-      concentrationLevel: _concentrationLevel.toInt(),
-      difficulty: _difficultyLevel.toInt(), // 難易度を追加
+      concentrationLevel: _concentrationLevel, // intのまま
+      difficulty: _difficultyLevel, // intのまま
     );
 
     try {
@@ -106,56 +116,100 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            TextField(
-              controller: _amountController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: '進捗量 (${widget.plan.unit})',
-                hintText: '例: 10',
-              ),
+            // 進捗量
+            Row(
+              children: [
+                Expanded(
+                  child: Slider(
+                    value: double.tryParse(_amountController.text) ?? widget.plan.completedAmount.toDouble(),
+                    min: widget.plan.completedAmount.toDouble(),
+                    max: widget.plan.totalAmount.toDouble(),
+                    divisions: (widget.plan.totalAmount - widget.plan.completedAmount).toInt() > 0 ? (widget.plan.totalAmount - widget.plan.completedAmount).toInt() : 1,
+                    label: (double.tryParse(_amountController.text) ?? widget.plan.completedAmount.toDouble()).toStringAsFixed(1),
+                    onChanged: (double value) {
+                      setState(() {
+                        _amountController.text = value.toStringAsFixed(1);
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                SizedBox(
+                  width: 80,
+                  child: TextField(
+                    controller: _amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: '進捗量 (${widget.plan.unit})',
+                      hintText: '例: 10',
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            Text('集中度: ${_concentrationLevel.toInt()}'),
-            Slider(
-              value: _concentrationLevel,
-              min: 1,
-              max: 5,
-              divisions: 4,
-              label: _concentrationLevel.round().toString(),
-              onChanged: (double value) {
-                setState(() {
-                  _concentrationLevel = value;
-                });
-              },
+            // 集中度
+            const Text('集中度'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(3, (index) {
+                final isSelected = _concentrationLevel == index + 1;
+                final emojis = ['☹️', '😐', '😁'];
+                return GestureDetector(
+                  onTap: () => setState(() => _concentrationLevel = index + 1),
+                  child: Opacity(
+                    opacity: isSelected ? 1.0 : 0.5,
+                    child: Text(emojis[index], style: const TextStyle(fontSize: 32)),
+                  ),
+                );
+              }),
             ),
-            const SizedBox(height: 16), // 難易度との間にスペースを追加
-            Text('難易度: ${_difficultyLevel.toInt()}'),
-            Slider(
-              value: _difficultyLevel,
-              min: 1,
-              max: 5,
-              divisions: 4,
-              label: _difficultyLevel.round().toString(),
-              onChanged: (double value) {
-                setState(() {
-                  _difficultyLevel = value;
-                });
-              },
+            const SizedBox(height: 16),
+            // 難易度
+            const Text('難易度'),
+            _StarRating(
+              rating: _difficultyLevel,
+              onRatingChanged: (rating) => setState(() => _difficultyLevel = rating),
             ),
             const SizedBox(height: 40),
-            ElevatedButton(
+            PrimaryButton(
               onPressed: _saveLearningRecord,
-              child: const Text('記録して完了'),
+              text: '記録して完了',
             ),
-            TextButton(
+            const SizedBox(height: 16), // ボタン間のスペース
+            SecondaryButton(
               onPressed: () {
                 Navigator.of(context).pop(); // 評価せずに戻る
               },
-              child: const Text('キャンセル'),
+              text: 'キャンセル',
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+// 星評価のためのカスタムウィジェット (PlanCreationScreenからコピー)
+class _StarRating extends StatelessWidget {
+  final int rating;
+  final Function(int) onRatingChanged;
+
+  const _StarRating({required this.rating, required this.onRatingChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(5, (index) {
+        return IconButton(
+          onPressed: () => onRatingChanged(index + 1),
+          icon: Icon(
+            index < rating ? Icons.star : Icons.star_border,
+            color: Colors.amber,
+          ),
+        );
+      }),
     );
   }
 }
