@@ -1,0 +1,33 @@
+name: Cloud Functions CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'cloud_functions/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'cloud_functions/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: npm install
+      working-directory: ./cloud_functions
+
+    - name: Run linter
+      run: npm run lint
+      working-directory: ./cloud_functions
+
+    - name: Run tests
+      run: npm run test
+      working-directory: ./cloud_functions

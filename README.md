@@ -59,4 +59,66 @@
 * **フェーズ2: 内蔵Anki機能の実装**: 科学的根拠に基づいた効率的な復習機能の統合。
 * **フェーズ3: 拡張機能と改善**:
     * **クラウド同期 (Firebase)**: 複数デバイスでのデータ同期。
----
+
+## 開発環境でのローカルテスト手順（Firebase に依存しない InMemory 実行方法）
+
+このプロジェクトは、Firebase などの外部サービスに依存しない InMemory リポジトリを使用して、ローカル環境でテストおよび開発を行うことができます。これにより、CI/CD パイプラインやオフライン環境での開発が容易になります。
+
+### `catalyze_ai` パッケージのテスト
+
+`catalyze_ai` パッケージのユニットテストを実行するには、以下のコマンドを使用します。
+
+```bash
+cd packages/catalyze_ai
+dart pub get
+dart test
+```
+
+### `flutter_app` のウィジェットテスト
+
+`flutter_app` のウィジェットテストを実行するには、以下のコマンドを使用します。これらのテストは、`catalyze_ai` パッケージの `InMemoryRepository` を使用して、Firebase への依存なしに UI の動作を検証します。
+
+```bash
+cd flutter_app
+flutter pub get
+flutter test
+```
+
+### `flutter_app` のローカル実行（InMemory モード）
+
+`flutter_app` を InMemory モードでローカル実行するには、`lib/main.dart` で `AIService` のインスタンス化時に `InMemoryRepository` を明示的に注入するか、デフォルトの `InMemoryRepository` が使用されることを確認します。
+
+```dart
+// lib/main.dart (抜粋)
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Provider<AIService>(
+      // InMemoryRepository がデフォルトで使用されます
+      create: (_) => AIService(),
+      child: MaterialApp(
+        title: 'Catalyze',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: const HomeScreen(),
+      ),
+    );
+  }
+}
+```
+
+その後、通常通り Flutter アプリケーションを実行します。
+
+```bash
+cd flutter_app
+flutter run
+```
+
+これにより、Firebase などの実際のバックエンドサービスに接続することなく、アプリケーションの主要な機能をテストできます。

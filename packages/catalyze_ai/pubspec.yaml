@@ -1,0 +1,16 @@
+name: catalyze_ai
+description: A Dart package for AI-powered study planning and analysis.
+version: 0.0.1
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  meta: ^1.9.1
+  json_annotation: ^4.8.1
+
+dev_dependencies:
+  test: ^1.24.3
+  build_runner: ^2.4.6
+  json_serializable: ^6.7.1
