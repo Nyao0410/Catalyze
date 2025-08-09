@@ -16,6 +16,7 @@ void main() {
       totalUnits: 100,
       createdAt: DateTime.now().subtract(const Duration(days: 10)),
       deadline: DateTime.now().add(const Duration(days: 20)),
+      schemaVersion: 2, // Added schemaVersion
     );
     // User has completed 20 units.
     final record = StudyRecord(

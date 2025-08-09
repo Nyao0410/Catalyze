@@ -30,8 +30,14 @@ class StudyPlan {
   /// The dynamically adjusted deadline based on progress.
   final DateTime? dynamicDeadline;
 
+  /// Indicates if the study plan is archived.
+  final bool isArchived;
+
+  /// The schema version of this study plan data.
+  final int schemaVersion;
+
   /// Creates a new [StudyPlan] instance.
-  StudyPlan({
+  const StudyPlan({ // Added const
     required this.id,
     required this.userId,
     required this.title,
@@ -41,6 +47,8 @@ class StudyPlan {
     this.rounds = 1,
     this.dailyQuota,
     this.dynamicDeadline,
+    this.isArchived = false, // Default value for new field
+    this.schemaVersion = 2, // New schema version
   });
 
   /// Creates a copy of this [StudyPlan] but with the given fields replaced with
@@ -55,6 +63,8 @@ class StudyPlan {
     int? rounds,
     int? dailyQuota,
     DateTime? dynamicDeadline,
+    bool? isArchived,
+    int? schemaVersion,
   }) {
     return StudyPlan(
       id: id ?? this.id,
@@ -66,6 +76,8 @@ class StudyPlan {
       rounds: rounds ?? this.rounds,
       dailyQuota: dailyQuota ?? this.dailyQuota,
       dynamicDeadline: dynamicDeadline ?? this.dynamicDeadline,
+      isArchived: isArchived ?? this.isArchived,
+      schemaVersion: schemaVersion ?? this.schemaVersion,
     );
   }
 }

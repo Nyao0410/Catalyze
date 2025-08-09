@@ -33,8 +33,8 @@ QuotaResult recomputeDynamicQuota(
 
   // Calculate recent pace from the last 7 days of records.
   final sevenDaysAgo = now.subtract(const Duration(days: 7));
-  final recentRecords = records.where((r) => r.date.isAfter(sevenDaysAgo));
-  final recentUnits = recentRecords.fold<int>(0, (sum, r) => sum + r.unitsCompleted);
+  final recentRecords = records.where((r) => r.date.isAfter(sevenDaysAgo)).toList();
+  final double recentUnits = recentRecords.fold<double>(0.0, (sum, r) => sum + r.unitsCompleted);
   final double recentPace = recentRecords.isNotEmpty ? recentUnits / 7.0 : 0.0;
 
   // Calculate achievement rate.
@@ -64,7 +64,7 @@ QuotaResult recomputeDynamicQuota(
 ///
 /// Returns a list of future [DateTime]s for review.
 List<DateTime> generateReviewSchedules(DateTime completedAt, int quality) {
-  final baseIntervals = [1, 7, 30, 90]; // in days
+  const baseIntervals = [1, 7, 30, 90]; // in days
 
   // Quality factor: 3 is baseline, 5 is best (+20%), 1 is worst (-20%)
   final multiplier = 1.0 + (quality - 3) * 0.1;

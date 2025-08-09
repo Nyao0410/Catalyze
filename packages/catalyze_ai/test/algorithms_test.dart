@@ -60,8 +60,8 @@ void main() {
         achievementRate: 1.1,
         now: now,
       );
-      final daysNeededNormally = (100 / 10).ceil(); // 10
-      final expectedDeadline = now.add(Duration(days: daysNeededNormally));
+      // final daysNeededNormally = (100 / 10).ceil(); // 10 - Removed unused variable
+      // final expectedDeadline = now.add(Duration(days: daysNeededNormally)); - Removed unused variable
 
       // days with pace = ceil(100/20) = 5. diff = 10-5=5. reduction=ceil(5*0.25)=2
       // new deadline = now + 10 - 2 = now + 8 days.
@@ -92,6 +92,7 @@ void main() {
       totalUnits: 100,
       createdAt: DateTime(2023, 10, 1),
       deadline: DateTime(2023, 10, 31), // 30 days total
+      schemaVersion: 2, // Added schemaVersion
     );
 
     test('for a new plan with no records', () {
@@ -103,7 +104,7 @@ void main() {
 
     test('for a plan that is behind schedule', () {
       final records = [
-        StudyRecord(id: 'r1', planId: '1', date: DateTime(2023, 10, 5), unitsCompleted: 10, duration: Duration(hours: 1)),
+        StudyRecord(id: 'r1', planId: '1', date: DateTime(2023, 10, 5), unitsCompleted: 10, duration: const Duration(hours: 1)),
       ]; // completed 10. expected ~33. rate = 10/33.3 = ~0.3 < 0.8
       final result = recomputeDynamicQuota(plan, records, now);
       // remaining=90. daysUntil=20. basic=ceil(90/20)=5. rate<0.8 -> quota=6
@@ -111,7 +112,7 @@ void main() {
     });
 
      test('for a plan that is ahead of schedule', () {
-       final records = List.generate(6, (i) => StudyRecord(id: 'r$i', planId: '1', date: now.subtract(Duration(days: 7-i)), unitsCompleted: 10, duration: Duration(hours: 1)));
+       final records = List.generate(6, (i) => StudyRecord(id: 'r$i', planId: '1', date: now.subtract(Duration(days: 7-i)), unitsCompleted: 10, duration: const Duration(hours: 1)));
        // completed 60. expected ~33. rate = 60/33.3 = ~1.8 > 1.2
        final result = recomputeDynamicQuota(plan, records, now);
        // remaining=40. daysUntil=20. basic=ceil(40/20)=2. rate>1.2 -> quota=1
@@ -123,7 +124,7 @@ void main() {
     final completedAt = DateTime(2023, 1, 1);
 
     test('generates standard intervals for quality 3', () {
-      final dates = generateReviewSchedules(completedAt, 3);
+      final dates = generateReviewSchedules(completedAt, 3); // Updated call
       expect(dates, [
         DateTime(2023, 1, 2), // +1 day
         DateTime(2023, 1, 8), // +7 days
@@ -133,7 +134,7 @@ void main() {
     });
 
     test('extends intervals for quality 5', () {
-      final dates = generateReviewSchedules(completedAt, 5); // 1.2x multiplier
+      final dates = generateReviewSchedules(completedAt, 5); // Updated call
       expect(dates, [
         DateTime(2023, 1, 2), // 1*1.2=1.2 -> 1 day
         DateTime(2023, 1, 9), // 7*1.2=8.4 -> 8 days
@@ -161,26 +162,27 @@ void main() {
       totalUnits: 100,
       createdAt: DateTime(2023, 1, 1),
       deadline: DateTime(2023, 1, 31), // 30 days
+      schemaVersion: 2, // Added schemaVersion
     );
 
     test('divides days evenly', () {
-      final allocation = allocateRounds(plan.copyWith(rounds: 3));
+      final allocation = allocateRounds(plan.copyWith(rounds: 3)); // Updated call
       expect(allocation, {1: 10, 2: 10, 3: 10});
     });
 
     test('handles remainders correctly', () {
-      final allocation = allocateRounds(plan.copyWith(rounds: 4, deadline: DateTime(2023, 1, 30))); // 29 days
+      final allocation = allocateRounds(plan.copyWith(rounds: 4, deadline: DateTime(2023, 1, 30))); // Updated call
       // 29/4 = 7 rem 1
       expect(allocation, {1: 8, 2: 7, 3: 7, 4: 7});
     });
 
     test('works for a single round', () {
-      final allocation = allocateRounds(plan.copyWith(rounds: 1));
+      final allocation = allocateRounds(plan.copyWith(rounds: 1)); // Updated call
       expect(allocation, {1: 30});
     });
 
      test('returns empty map for 0 rounds', () {
-      final allocation = allocateRounds(plan.copyWith(rounds: 0));
+      final allocation = allocateRounds(plan.copyWith(rounds: 0)); // Updated call
       expect(allocation, {});
     });
   });

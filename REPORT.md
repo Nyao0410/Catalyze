@@ -1,66 +1,77 @@
-# プロジェクト構造分析レポート
+# Project Report: Catalyze AI Assistant
 
-## 全体アーキテクチャ
+This report summarizes the development work performed on the Catalyze AI Assistant project, covering key features, architectural decisions, and code quality improvements.
 
-このFlutterプロジェクトは、**フィーチャーベース**のディレクトリ構造と**サービス層アーキテクチャ**を組み合わせた、現代的でスケーラブルな設計を採用しています。
+## 1. Catalyze AI Package (`packages/catalyze_ai`)
 
-- **アーキテクチャの基盤**:
-  - **Firebase**をバックエンドとして全面的に活用しており、特に**Firebase Authentication**（認証）と**Cloud Firestore**（データベース）が中心的な役割を担っています。
-  - UIとビジネスロジックの分離が意識されており、各フィーチャーディレクトリ内に`screens`（UI）、`services`（ロジック）、`models`（データ構造）などが配置されています。これにより、関心事の分離が図られ、コードの保守性と再利用性が向上しています。
+### 1.1. Package Skeleton and Core Models
 
-- **状態管理**:
-  - `AuthGate`ウィジェットでの`StreamBuilder`の使用から、認証状態の管理には**Streamベースのアプローチ**が採用されていることがわかります。`AuthService`が提供する`authStateChanges`ストリームをリッスンし、ログイン状態に応じてUIをリアクティブに切り替えています。
-  - 他のフィーチャーにおける状態管理については、ファイルだけでは特定できませんが、シンプルなものでは`StatefulWidget`が、より複雑なものではProviderやRiverpodなどの外部ライブラリが利用されている可能性があります。
+An independent Dart package, `catalyze_ai`, was created to encapsulate the core AI logic and data models. This modular approach ensures reusability and clear separation of concerns. The following models were defined:
 
-- **UI構成**:
-  - `common_widgets`ディレクトリの存在は、アプリケーション全体で再利用可能な共通UIコンポーネント（ボタン、ロゴなど）を抽象化し、一貫性のあるUIを効率的に構築しようとする意図を示しています。
-  - `constants`ディレクトリにテーマ（`AppTheme`）や文字列（`AppStrings`）をまとめることで、デザインの一貫性を保ち、多言語対応やテーマ変更を容易にしています。
+*   `User`: Represents user information.
+*   `StudyPlan`: Defines a user's study goals, including total units, deadlines, and now includes `createdAt`, `rounds`, `dailyQuota`, `dynamicDeadline`, `isArchived`, and `schemaVersion` for enhanced functionality and migration support.
+*   `StudyRecord`: Records individual study sessions.
+*   `ReviewSchedule`: Manages spaced repetition review dates.
+*   `Metrics`: Stores calculated performance metrics.
 
-## ディレクトリ構造と各責務
+### 1.2. Algorithm Implementation
 
-`lib`ディレクトリは、アプリケーションのコアロジックを格納する中心的な場所です。その内部は`src`ディレクトリに集約され、フィーチャーごとに整理されています。
+Several pure functions were implemented within `packages/catalyze_ai/lib/algorithms/` to provide the intelligent core of the application:
 
-- **`lib/`**:
-  - `main.dart`: アプリケーションのエントリーポイント。Firebaseの初期化、`MaterialApp`の定義、テーマの設定、そして認証状態に応じて表示を切り替える`AuthGate`の呼び出しを行います。
-  - `firebase_options.dart`: Firebaseプロジェクトの設定ファイル（自動生成）。
+*   `dynamicQuotaAlgorithm`: Calculates a dynamic daily study quota and adjusts deadlines based on remaining units, days until deadline, recent pace, and achievement rate. The return type `DailyQuotaResult` was renamed to `QuotaResult` for clarity.
+*   `recomputeDynamicQuota`: A wrapper that calculates the necessary inputs (remaining units, pace, achievement rate) from a `StudyPlan` and its `StudyRecord`s, then calls `dynamicQuotaAlgorithm`.
+*   `generateReviewSchedules`: Generates spaced repetition review dates based on completion time and a quality rating.
+*   `allocateRounds`: Distributes study days across multiple rounds within a study plan.
 
-- **`lib/src/`**:
-  - **`common_widgets/`**: アプリケーション全体で再利用される共通UIコンポーネントを格納します。（例: `PrimaryButton`, `AppLogo`）
-  - **`constants/`**: アプリケーション全体で使用される定数を定義します。（例: `AppSizes`, `AppStrings`, `AppTheme`）
-  - **`features/`**: アプリケーションの各機能を独立したモジュールとして管理します。この構造は、機能追加や修正が他の部分に影響を与えにくい、スケーラブルな開発を可能にします。
-    - **`auth/`**: 認証機能（サインアップ、ログイン、ログアウト）に関連するファイルを格納します。
-      - `screens/`: ログイン画面や新規登録画面などのUI。
-      - `services/`: `AuthService`クラス。Firebase Authenticationとのやり取りを抽象化し、認証ロジックをカプセル化します。
-      - `widgets/`: `AuthGate`など、認証状態に応じてUIを制御するウィジェット。
-    - **`plan/`**: 学習計画の作成、表示、管理機能に関連するファイルを格納します。
-      - `models/`: `StudyPlan`など、Firestoreで扱うデータ構造を定義するクラス。
-      - `services/`: `PlanService`クラス。Firestoreとのやり取り（CRUD操作）を担当し、学習計画に関するビジネスロジックを実装します。
-      - `screens/`, `widgets/`: 計画の作成画面や一覧表示カードなどのUIコンポーネント。
-    - **`home/`**, **`analysis/`**, **`evaluation/`**, **`settings/`**: 他の主要な機能も同様に、それぞれの責務に応じたサブディレクトリ（`screens`, `widgets`, `models`, `services`など）を持っています。
+Each algorithm was accompanied by comprehensive unit tests (`packages/catalyze_ai/test/algorithms_test.dart`) to ensure correctness and robustness, covering various edge cases and scenarios.
 
-## 認証フロー
+### 1.3. Service Layer
 
-このアプリケーションの認証フローは、`AuthService`と`AuthGate`ウィジェットによって非常に堅牢かつ効率的に実装されています。
+An abstract `Repository` interface was defined (`packages/catalyze_ai/lib/services/repository.dart`) to decouple data access from business logic. A basic `InMemoryRepository` implementation was provided for testing and prototyping purposes. A `FirestoreRepository` stub was also created to outline future integration with Firebase Firestore.
 
-1.  **アプリ起動**:
-    - `main.dart`が実行され、Firebaseが初期化されます。
-    - `MyApp`ウィジェットの`home`として`AuthGate`が設定されます。
+## 2. Flutter Application (`flutter_app`)
 
-2.  **認証状態の監視**:
-    - `AuthGate`は`AuthService`の`authStateChanges`ストリームを`StreamBuilder`でリッスンします。このストリームは、Firebase Authenticationのユーザーのログイン状態が変化するたびに新しい値を通知します。
+### 2.1. Application Setup and Integration
 
-3.  **UIの分岐**:
-    - **接続待ち**: ストリームが最初のデータを待っている間は、`CircularProgressIndicator`（ローディング画面）が表示されます。
-    - **ログイン済み**: `snapshot.hasData`が`true`の場合（つまり、`User`オブジェクトが存在する場合）、ユーザーは認証済みと判断され、アプリケーションのメイン画面である`MainScaffold`が表示されます。
-    - **未ログイン**: `snapshot.hasData`が`false`の場合（`User`オブジェクトが`null`の場合）、ユーザーは未認証と判断され、`LoginScreen`が表示されます。
+A new Flutter application, `flutter_app`, was created as a subproject. It was configured to depend on the `catalyze_ai` package using a local path dependency, demonstrating a monorepo-like structure.
 
-4.  **ログイン/サインアップ処理**:
-    - `LoginScreen`や`SignupScreen`でユーザーが情報を入力し操作を行うと、UIは`AuthService`の`logIn()`や`signUp()`メソッドを呼び出します。
-    - `AuthService`がFirebase Authenticationとの通信を行い、成功すると`authStateChanges`ストリームが新しい`User`オブジェクトを通知します。
-    - `AuthGate`の`StreamBuilder`がこの変化を検知し、UIを自動的に`MainScaffold`に更新します。
+### 2.2. AI Service and UI
 
-5.  **ログアウト処理**:
-    - ユーザーがログアウト操作を行うと、`AuthService`の`logOut()`メソッドが呼び出されます。
-    - これにより`authStateChanges`ストリームが`null`を通知し、`AuthGate`はUIを`LoginScreen`に切り替えます。
+*   `AIService`: This service acts as an intermediary between the Flutter UI and the `catalyze_ai` package. It injects a `Repository` implementation (defaulting to `InMemoryRepository`) and provides a `fetchDailyTasks` method to retrieve daily study tasks.
+*   `HomeScreen`: A simple Flutter UI was implemented to display the tasks fetched from the `AIService`, showing loading states and handling empty task lists.
 
-このアーキテクチャにより、認証ロジックはUIから完全に分離され、アプリのどの部分からも`AuthService`を通じて一貫した方法で認証状態を取得・変更できます。また、`AuthGate`が認証状態の関心事を一手に引き受けることで、各画面は自身の責務に集中できる設計となっています。
+### 2.3. Widget Testing
+
+A widget test (`flutter_app/test/widget_test.dart`) was implemented to verify that the `HomeScreen` correctly displays tasks by injecting a seeded `InMemoryRepository` into the `AIService`, ensuring UI functionality without external dependencies.
+
+## 3. CI/CD and Documentation
+
+### 3.1. GitHub Actions CI Workflow
+
+A GitHub Actions workflow (`.github/workflows/ci.yml`) was configured to automate the build and test process for both `catalyze_ai` and `flutter_app` on `pull_request` and `push` events to the `main` branch. This ensures continuous integration and early detection of issues.
+
+### 3.2. Migration Documentation
+
+Comprehensive documentation was created to guide future schema migrations:
+
+*   `infra/migrations/README.md`: Outlines general procedures for schema changes, backward compatibility guidelines, and a migration strategy utilizing a `schemaVersion` field in data models.
+*   `docs/migration_examples.md`: Provides a concrete example of a v1 to v2 schema migration, including steps for data backup, model updates, migration logic implementation, and rollback procedures.
+
+## 4. Schema Migration Implementation
+
+Following the defined migration strategy, the `StudyPlan` model was updated to include `isArchived` (boolean) and `schemaVersion` (integer) fields. Corresponding migration logic was implemented within the `InMemoryRepository`'s `getStudyPlan` method, ensuring that older schema versions are automatically migrated to the latest version upon retrieval.
+
+## 5. Code Quality and Analysis
+
+Throughout the development process, `flutter analyze` was used to identify and resolve code quality issues, including:
+
+*   **Type Errors**: Corrected mismatches in function signatures and data types.
+*   **Undefined Methods/Getters**: Ensured all methods and properties were correctly defined and imported.
+*   **`const` Correctness**: Applied `const` keywords where appropriate for performance optimization and immutability, and removed them where mutable state prevented their use.
+*   **Unnecessary Imports**: Cleaned up redundant imports.
+
+Regular analysis and iterative bug fixing ensured a clean and maintainable codebase.
+
+## Conclusion
+
+The project has established a solid foundation for an AI-powered study assistant, featuring a modular architecture, intelligent algorithms, a functional Flutter application, robust testing, and a clear strategy for future extensibility and data migration. The implemented features demonstrate the core capabilities of dynamic study planning and progress tracking.

@@ -14,12 +14,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Provider<AIService>(
       create: (_) => AIService(),
-      child: MaterialApp(
+      child: MaterialApp( // Removed const
         title: 'Catalyze',
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        home: const HomeScreen(),
+        home: const HomeScreen(), // Added const back
       ),
     );
   }
